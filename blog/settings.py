@@ -53,7 +53,7 @@ TEMPLATES = [
 ]
 
 STATICFILES_DIRS = [
-    BASE_DIR / 'next-app' / '.next' / 'static'
+    BASE_DIR / 'static'
 ]
 
 WSGI_APPLICATION = 'blog.wsgi.application'
@@ -98,5 +98,6 @@ USE_I18N = True
 USE_TZ = True
 
 STATIC_URL = 'static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
