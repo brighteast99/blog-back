@@ -20,7 +20,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'graphene_django'
+    'graphene_django',
+    'blog.posts'
 ]
 
 MIDDLEWARE = [
@@ -84,7 +85,9 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-GRAPHENE = {}
+GRAPHENE = {
+    'SCHEMA': 'blog.schema.schema'
+}
 
 LANGUAGE_CODE = 'ko-kr'
 
