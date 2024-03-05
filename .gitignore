@@ -5,7 +5,8 @@
 
 venv/
 
-next-app/
+client/
+.staticfiles/
 
 .env
 .env.*
