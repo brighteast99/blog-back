@@ -8,5 +8,8 @@ venv/
 client/
 .staticfiles/
 
+*pyc
+__pycache__/
+
 .env
 .env.*
