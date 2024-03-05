@@ -8,7 +8,7 @@ load_dotenv()
 
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY')
 
-DEBUG = os.getenv('DJANGO_DEBUG', False)
+DEBUG = os.getenv('DJANGO_DEBUG', 'false').lower() == 'true'
 
 ALLOWED_HOSTS = ['localhost', os.getenv('PROXY_HOST')]
 
