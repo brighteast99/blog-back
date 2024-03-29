@@ -1,37 +1,148 @@
+import json
 import graphene
 from graphene_django import DjangoObjectType
 from graphql import GraphQLError
 from django.db import DatabaseError, IntegrityError
-
 from blog.posts.models import Category, Post
 
 
 class CategoryType(DjangoObjectType):
+    id = graphene.Int()
+    name = graphene.String()
+    post_count = graphene.Int(exclude_subcategories=graphene.Boolean())
+    subcategories = graphene.List(lambda: CategoryType)
+
     class Meta:
         model = Category
-        fields = ('id', 'name', 'subcategory_of', 'subcategories')
+        fields = '__all__'
+
+    @staticmethod
+    def resolve_id(self, info):
+        return self.id
+
+    @staticmethod
+    def resolve_name(self, info):
+        if self.id is None:
+            return "전체 게시글"
+
+        if self.id == 0:
+            return "분류 미지정"
+
+        return self.name
+
+    @staticmethod
+    def resolve_description(self, info):
+        if self.id is None:
+            return "블로그의 모든 게시글"
+
+        if self.id == 0:
+            return "분류가 없는 게시글"
+
+        return self.description
+
+    @staticmethod
+    def resolve_subcategories(self, info):
+        return self.subcategories.all()
+
+    @staticmethod
+    def resolve_post_count(self, info, exclude_subcategories=False):
+        if self.id is None:
+            return Post.objects.count()
+
+        if self.id == 0:
+            return Post.objects.filter(category__isnull=True).count()
+
+        if exclude_subcategories:
+            return self.posts.count()
+
+        subcategories = Category.get_descendants(self, include_self=True)
+        return Post.objects.filter(category__in=subcategories).count()
+
+    @staticmethod
+    def resolve_posts(self, info):
+        if self.id is None:
+            return Post.objects.all()
+
+        if self.id == 0:
+            return Post.objects.filter(category__isnull=True)
+
+        return self.posts.all()
 
 
 class PostType(DjangoObjectType):
+    category = graphene.Field(CategoryType)
+
     class Meta:
         model = Post
         fields = '__all__'
-        # ordering = ('-id',)
+
+    @staticmethod
+    def resolve_category(self, info):
+        return self.category if self.category is not None else Category(id=0)
 
 
 class Query(graphene.ObjectType):
-    posts = graphene.List(PostType, category=graphene.Int())
-    category_by_name = graphene.Field(CategoryType, name=graphene.String(required=True))
+    category_list = graphene.JSONString()
+    category_info = graphene.Field(CategoryType, id=graphene.Int())
+    post_list = graphene.List(PostType, category_id=graphene.Int())
 
-    def resolve_posts(root, info):
-        # We can easily optimize query count in the resolve method
-        return Post.objects.select_related('category').all()
+    @staticmethod
+    def resolve_category_list(root, info):
+        root_categories = Category.objects.root_nodes()
 
-    def resolve_category_by_name(root, info, name):
+        def category_to_dict(instance):
+            result = {
+                'id': instance.id,
+                'name': instance.name,
+                'postCount': Post.objects.filter(category__in=instance.get_descendants(include_self=True)).count(),
+                'subcategories': [category_to_dict(subcategory)
+                                  for subcategory in instance.subcategories.all()]
+            }
+            return result
+
+        categories_list = [{
+            'name': '전체 게시글',
+            'postCount': Post.objects.count(),
+            'subcategories': []
+        }]
+        categories_list.extend([category_to_dict(category) for category in root_categories])
+        categories_list.append({
+            'id': 0,
+            'name': '분류 미지정',
+            'postCount': Post.objects.filter(category__isnull=True).count(),
+            'subcategories': []
+        })
+        return json.dumps(categories_list)
+
+    @staticmethod
+    def resolve_category_info(root, info, **kwargs):
+        id = kwargs.get('id')
+
+        if id is None:
+            return Category()
+
+        if id == 0:
+            return Category(id=0)
+
+        return Category.objects.filter(id=id).first()
+
+    @staticmethod
+    def resolve_post_list(root, info, **kwargs):
+        category_id = kwargs.get('category_id')
+
+        if category_id is None:
+            return Post.objects.all()
+
+        if category_id == 0:
+            return Post.objects.filter(category__isnull=True)
+
         try:
-            return Category.objects.get(name=name)
+            category = Category.objects.get(id=category_id)
         except Category.DoesNotExist:
-            return None
+            return []
+
+        subcategories = category.get_descendants(include_self=True)
+        return Post.objects.filter(category__in=subcategories)
 
 
 class CreatePostInput(graphene.InputObjectType):
@@ -47,6 +158,7 @@ class CreatePostMutation(graphene.Mutation):
     success = graphene.Boolean()
     created_post = graphene.Field(PostType)
 
+    @staticmethod
     def mutate(root, info, **args):
         data = args.get('data')
 
@@ -59,7 +171,7 @@ class CreatePostMutation(graphene.Mutation):
             post = Post.objects.create(title=data.title,
                                        category=category,
                                        content=data.content)
-        except DatabaseError or IntegrityError as e:
+        except (DatabaseError, IntegrityError) as e:
             raise GraphQLError(f'Failed to create post: {e}')
 
         return CreatePost(success=True, created_post=post)
@@ -79,6 +191,7 @@ class UpdatePostMutation(graphene.Mutation):
     success = graphene.Boolean()
     updated_post = graphene.Field(PostType)
 
+    @staticmethod
     def mutate(root, info, **args):
         post_id = args.get('id')
 
@@ -95,7 +208,7 @@ class UpdatePostMutation(graphene.Mutation):
 
         try:
             post.save()
-        except DatabaseError or IntegrityError as e:
+        except (DatabaseError, IntegrityError) as e:
             raise GraphQLError(f'Failed to update post with id {post_id}: {e}')
 
         return UpdatePostMutation(success=True, updated_post=post)
@@ -107,6 +220,7 @@ class DeletePostMutation(graphene.Mutation):
 
     success = graphene.Boolean()
 
+    @staticmethod
     def mutate(self, info, **args):
         post_id = args.get('id')
 

@@ -1,14 +1,22 @@
 from django.db import models
+from mptt.models import MPTTModel, TreeForeignKey
 
 
-class Category(models.Model):
+class Category(MPTTModel):
     name = models.CharField(max_length=100)
-    subcategory_of = models.ForeignKey('self', null=True, blank=True, on_delete=models.CASCADE,
-                                       related_name='subcategories')
+    description = models.TextField(blank=True)
+    is_hidden = models.BooleanField(default=False)
+    cover_image = models.URLField(blank=True, null=True)
+    subcategory_of = TreeForeignKey('self', null=True, blank=True, on_delete=models.CASCADE,
+                                    related_name='subcategories')
 
     class Meta:
         verbose_name_plural = 'Categories'
-        ordering = ['id']
+        ordering = ['name']
+
+    class MPTTMeta:
+        order_insertion_by = ['name']
+        parent_attr = 'subcategory_of'
 
     def __str__(self):
         return self.name
@@ -17,16 +25,17 @@ class Category(models.Model):
 class Post(models.Model):
     title = models.CharField(max_length=100, null=False, blank=False)
     category = models.ForeignKey(
-        Category, related_name='posts', on_delete=models.CASCADE
+        Category, related_name='posts', on_delete=models.SET_NULL, null=True, blank=True
     )
     is_hidden = models.BooleanField(default=False)
     is_deleted = models.BooleanField(default=False)
     content = models.TextField(blank=True, null=True)
+    thumbnail = models.URLField(blank=True, null=True)
     created_at = models.DateTimeField(null=False, auto_now_add=True)
     updated_at = models.DateTimeField(null=False, auto_now=True)
 
     class Meta:
-        ordering = ['id']
+        ordering = ['-updated_at', '-created_at']
 
     def __str__(self):
-        return f'[{self.category.name}] {self.title}'
+        return f'[{self.category.name if self.category is not None else "분류 미지정"}] {self.title}'
