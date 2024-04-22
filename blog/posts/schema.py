@@ -82,9 +82,15 @@ class PostType(DjangoObjectType):
 
 
 class Query(graphene.ObjectType):
+    categories = graphene.List(CategoryType)
     category_list = graphene.JSONString()
     category_info = graphene.Field(CategoryType, id=graphene.Int())
     post_list = graphene.List(PostType, category_id=graphene.Int())
+    post = graphene.Field(PostType, id=graphene.Int(required=True))
+
+    @staticmethod
+    def resolve_categories(root, info):
+        return Category.objects.all()
 
     @staticmethod
     def resolve_category_list(root, info):
@@ -115,8 +121,8 @@ class Query(graphene.ObjectType):
         return json.dumps(categories_list)
 
     @staticmethod
-    def resolve_category_info(root, info, **kwargs):
-        id = kwargs.get('id')
+    def resolve_category_info(root, info, **args):
+        id = args.get('id')
 
         if id is None:
             return Category()
@@ -127,8 +133,8 @@ class Query(graphene.ObjectType):
         return Category.objects.filter(id=id).first()
 
     @staticmethod
-    def resolve_post_list(root, info, **kwargs):
-        category_id = kwargs.get('category_id')
+    def resolve_post_list(root, info, **args):
+        category_id = args.get('category_id')
 
         if category_id is None:
             return Post.objects.all()
@@ -144,11 +150,22 @@ class Query(graphene.ObjectType):
         subcategories = category.get_descendants(include_self=True)
         return Post.objects.filter(category__in=subcategories)
 
+    @staticmethod
+    def resolve_post(root, info, **args):
+        try:
+            post = Post.objects.get(id=args.get('id'))
+        except Post.DoesNotExist:
+            return None
+
+        return post
+
 
 class CreatePostInput(graphene.InputObjectType):
     title = graphene.String(required=True)
-    category = graphene.Int(required=True)
+    category = graphene.Int(required=False)
     content = graphene.String(required=True)
+    is_hidden = graphene.Boolean(required=True)
+    thumbnail = graphene.String(required=False)
 
 
 class CreatePostMutation(graphene.Mutation):
@@ -162,19 +179,24 @@ class CreatePostMutation(graphene.Mutation):
     def mutate(root, info, **args):
         data = args.get('data')
 
-        try:
-            category = Category.objects.get(id=data.category)
-        except Category.DoesNotExist:
-            raise GraphQLError(f'Category with id {data.category} does not exist.')
+        if data.category != 0:
+            try:
+                category = Category.objects.get(id=data.category)
+            except Category.DoesNotExist:
+                raise GraphQLError(f'Category with id {data.category} does not exist.')
+        else:
+            category = None
 
         try:
             post = Post.objects.create(title=data.title,
                                        category=category,
-                                       content=data.content)
+                                       content=data.content,
+                                       is_hidden=data.is_hidden,
+                                       thumbnail=data.thumbnail)
         except (DatabaseError, IntegrityError) as e:
             raise GraphQLError(f'Failed to create post: {e}')
 
-        return CreatePost(success=True, created_post=post)
+        return CreatePostMutation(success=True, created_post=post)
 
 
 class UpdatePostInput(graphene.InputObjectType):
