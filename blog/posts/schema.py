@@ -1,8 +1,11 @@
 import json
 import graphene
+from django.db import DatabaseError, IntegrityError
+from django.db.models import Q
 from graphene_django import DjangoObjectType
 from graphql import GraphQLError
-from django.db import DatabaseError, IntegrityError
+from graphql_jwt.decorators import login_required
+
 from blog.posts.models import Category, Post
 
 
@@ -42,31 +45,40 @@ class CategoryType(DjangoObjectType):
 
     @staticmethod
     def resolve_subcategories(self, info):
+        if not info.context.user.is_authenticated:
+            self.subcategories.exclude(is_hidden=True)
         return self.subcategories.all()
 
     @staticmethod
     def resolve_post_count(self, info, exclude_subcategories=False):
         if self.id is None:
-            return Post.objects.count()
+            posts = Post.objects
+        elif self.id == 0:
+            posts = Post.objects.filter(category__isnull=True)
+        else:
+            if exclude_subcategories:
+                posts = self.posts
+            else:
+                posts = Post.objects.filter(category__in=Category.get_descendants(self, include_self=True))
 
-        if self.id == 0:
-            return Post.objects.filter(category__isnull=True).count()
+        if not info.context.user.is_authenticated:
+            posts = posts.exclude(Q(is_hidden=True) | Q(category__is_hidden=True))
 
-        if exclude_subcategories:
-            return self.posts.count()
-
-        subcategories = Category.get_descendants(self, include_self=True)
-        return Post.objects.filter(category__in=subcategories).count()
+        return posts.count()
 
     @staticmethod
     def resolve_posts(self, info):
         if self.id is None:
-            return Post.objects.all()
+            posts = Post.objects.all()
+        elif self.id == 0:
+            posts = Post.objects.filter(category__isnull=True)
+        else:
+            posts = self.posts.all()
 
-        if self.id == 0:
-            return Post.objects.filter(category__isnull=True)
+        if not info.context.user.is_authenticated:
+            posts = posts.exclude(is_hidden=True)
 
-        return self.posts.all()
+        return posts
 
 
 class PostType(DjangoObjectType):
@@ -90,32 +102,47 @@ class Query(graphene.ObjectType):
 
     @staticmethod
     def resolve_categories(root, info):
+        if not info.context.user.is_authenticated:
+            return Category.objects.exclude(is_hidden=True)
+
         return Category.objects.all()
 
     @staticmethod
     def resolve_category_list(root, info):
+        authenticated = info.context.user.is_authenticated
         root_categories = Category.objects.root_nodes()
+        all_posts = Post.objects
+
+        if not authenticated:
+            root_categories = root_categories.exclude(is_hidden=True)
+            all_posts = all_posts.exclude(Q(category__is_hidden=True) | Q(is_hidden=True))
 
         def category_to_dict(instance):
+            subcategories = instance.subcategories.all()
+
+            if not authenticated:
+                subcategories = subcategories.exclude(is_hidden=True)
+
             result = {
                 'id': instance.id,
+                'isHidden': instance.is_hidden,
                 'name': instance.name,
-                'postCount': Post.objects.filter(category__in=instance.get_descendants(include_self=True)).count(),
+                'postCount': all_posts.filter(category__in=instance.get_descendants(include_self=True)).count(),
                 'subcategories': [category_to_dict(subcategory)
-                                  for subcategory in instance.subcategories.all()]
+                                  for subcategory in subcategories]
             }
             return result
 
         categories_list = [{
             'name': '전체 게시글',
-            'postCount': Post.objects.count(),
+            'postCount': all_posts.count(),
             'subcategories': []
         }]
         categories_list.extend([category_to_dict(category) for category in root_categories])
         categories_list.append({
             'id': 0,
             'name': '분류 미지정',
-            'postCount': Post.objects.filter(category__isnull=True).count(),
+            'postCount': all_posts.filter(category__isnull=True).count(),
             'subcategories': []
         })
         return json.dumps(categories_list)
@@ -130,25 +157,40 @@ class Query(graphene.ObjectType):
         if id == 0:
             return Category(id=0)
 
-        return Category.objects.filter(id=id).first()
+        result = Category.objects.filter(id=id).first()
+
+        if not info.context.user.is_authenticated and result.is_hidden:
+            raise GraphQLError('Login required')
+
+        return result
 
     @staticmethod
     def resolve_post_list(root, info, **args):
+        authenticated = info.context.user.is_authenticated
         category_id = args.get('category_id')
 
         if category_id is None:
-            return Post.objects.all()
+            posts = Post.objects.all()
+        elif category_id == 0:
+            posts = Post.objects.filter(category__isnull=True)
+        else:
+            try:
+                category = Category.objects.get(id=category_id)
+                if not authenticated and category.is_hidden:
+                    raise GraphQLError('Login required')
+            except Category.DoesNotExist:
+                return []
 
-        if category_id == 0:
-            return Post.objects.filter(category__isnull=True)
+            subcategories = category.get_descendants(include_self=True)
+            if not authenticated:
+                subcategories = subcategories.exclude(is_hidden=True)
 
-        try:
-            category = Category.objects.get(id=category_id)
-        except Category.DoesNotExist:
-            return []
+            posts = Post.objects.filter(category__in=subcategories)
 
-        subcategories = category.get_descendants(include_self=True)
-        return Post.objects.filter(category__in=subcategories)
+        if not authenticated:
+            posts = posts.exclude(Q(is_hidden=True) | Q(category__is_hidden=True))
+
+        return posts
 
     @staticmethod
     def resolve_post(root, info, **args):
@@ -156,6 +198,10 @@ class Query(graphene.ObjectType):
             post = Post.objects.get(id=args.get('id'))
         except Post.DoesNotExist:
             return None
+
+        if not info.context.user.is_authenticated and \
+                (post.is_hidden or (post.category is not None and post.category.is_hidden)):
+            raise GraphQLError('Login required')
 
         return post
 
@@ -176,6 +222,7 @@ class CreatePostMutation(graphene.Mutation):
     created_post = graphene.Field(PostType)
 
     @staticmethod
+    @login_required
     def mutate(root, info, **args):
         data = args.get('data')
 
@@ -214,6 +261,7 @@ class UpdatePostMutation(graphene.Mutation):
     updated_post = graphene.Field(PostType)
 
     @staticmethod
+    @login_required
     def mutate(root, info, **args):
         post_id = args.get('id')
 
@@ -243,6 +291,7 @@ class DeletePostMutation(graphene.Mutation):
     success = graphene.Boolean()
 
     @staticmethod
+    @login_required
     def mutate(self, info, **args):
         post_id = args.get('id')
 
