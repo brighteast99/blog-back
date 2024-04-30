@@ -160,7 +160,7 @@ class Query(graphene.ObjectType):
         result = Category.objects.filter(id=id).first()
 
         if not info.context.user.is_authenticated and result.is_hidden:
-            raise GraphQLError('Login required')
+            raise GraphQLError('You do not have permission to perform this action')
 
         return result
 
@@ -177,7 +177,7 @@ class Query(graphene.ObjectType):
             try:
                 category = Category.objects.get(id=category_id)
                 if not authenticated and category.is_hidden:
-                    raise GraphQLError('Login required')
+                    raise GraphQLError('You do not have permission to perform this action')
             except Category.DoesNotExist:
                 return []
 
@@ -201,12 +201,12 @@ class Query(graphene.ObjectType):
 
         if not info.context.user.is_authenticated and \
                 (post.is_hidden or (post.category is not None and post.category.is_hidden)):
-            raise GraphQLError('Login required')
+            raise GraphQLError('You do not have permission to perform this action')
 
         return post
 
 
-class CreatePostInput(graphene.InputObjectType):
+class PostInput(graphene.InputObjectType):
     title = graphene.String(required=True)
     category = graphene.Int(required=False)
     content = graphene.String(required=True)
@@ -216,7 +216,7 @@ class CreatePostInput(graphene.InputObjectType):
 
 class CreatePostMutation(graphene.Mutation):
     class Arguments:
-        data = CreatePostInput(required=True)
+        data = PostInput(required=True)
 
     success = graphene.Boolean()
     created_post = graphene.Field(PostType)
@@ -226,7 +226,9 @@ class CreatePostMutation(graphene.Mutation):
     def mutate(root, info, **args):
         data = args.get('data')
 
-        if data.category != 0:
+        print(data)
+
+        if 'category' in data:
             try:
                 category = Category.objects.get(id=data.category)
             except Category.DoesNotExist:
@@ -246,16 +248,10 @@ class CreatePostMutation(graphene.Mutation):
         return CreatePostMutation(success=True, created_post=post)
 
 
-class UpdatePostInput(graphene.InputObjectType):
-    title = graphene.String()
-    category = graphene.Int()
-    content = graphene.String()
-
-
 class UpdatePostMutation(graphene.Mutation):
     class Arguments:
         id = graphene.Int(required=True)
-        data = UpdatePostInput(required=True)
+        data = PostInput(required=True)
 
     success = graphene.Boolean()
     updated_post = graphene.Field(PostType)
@@ -268,18 +264,22 @@ class UpdatePostMutation(graphene.Mutation):
         try:
             post = Post.objects.get(id=post_id)
         except Post.DoesNotExist:
-            raise GraphQLError(f'Post with id {post_id} does not exist.')
+            return UpdatePostMutation(success=False, updated_post=None)
 
         data = args.get('data')
         post.title = data.get('title', post.title)
-        post.content = data.get('content', post.content)
         if 'category' in data:
             post.category = Category.objects.get(id=data.category)
+        else:
+            post.category = None
+        post.content = data.get('content', post.content)
+        post.is_hidden = data.get('is_hidden', post.is_hidden)
+        post.thumbnail = data.get('thumbnail', post.thumbnail)
 
         try:
             post.save()
         except (DatabaseError, IntegrityError) as e:
-            raise GraphQLError(f'Failed to update post with id {post_id}: {e}')
+            return UpdatePostMutation(success=False, updated_post=None)
 
         return UpdatePostMutation(success=True, updated_post=post)
 
