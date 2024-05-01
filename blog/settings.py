@@ -37,7 +37,7 @@ CSRF_TRUSTED_ORIGINS = ['http://localhost:3000', os.getenv('PROXY_ORIGIN')]
 
 INSTALLED_APPS = [
     'django.contrib.admin',
-    'django.contrib.jwt',
+    'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
