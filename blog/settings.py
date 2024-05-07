@@ -10,6 +10,21 @@ load_dotenv()
 
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY')
 
+AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')
+AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
+AWS_S3_ENDPOINT_URL = f'https://{os.getenv("AWS_S3_ENDPOINT_URL")}'
+AWS_STORAGE_BUCKET_NAME = os.getenv('AWS_STORAGE_BUCKET_NAME')
+AWS_S3_CUSTOM_DOMAIN = f'{os.getenv("AWS_S3_ENDPOINT_URL")}/{AWS_STORAGE_BUCKET_NAME}'
+AWS_S3_OBJECT_PARAMETERS = {
+    'CacheControl': 'max-age=86400',
+}
+AWS_LOCATION = ''
+AWS_DEFAULT_ACL = 'public-read'
+
+STATIC_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/{AWS_LOCATION}/static/'
+STATICFILES_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+
 DEBUG = os.getenv('DJANGO_DEBUG', 'false').lower() == 'true'
 
 ALLOWED_HOSTS = ['localhost', os.getenv('PROXY_HOST')]
@@ -44,7 +59,9 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'corsheaders',
     'graphene_django',
+    'graphene_file_upload.django',
     'graphql_jwt.refresh_token.apps.RefreshTokenConfig',
+    'blog.info',
     'blog.posts',
     'blog.jwt'
 ]
@@ -58,7 +75,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware'
 ]
 
 ROOT_URLCONF = 'blog.urls'
