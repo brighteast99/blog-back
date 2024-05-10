@@ -17,9 +17,9 @@ class InfoType(DjangoObjectType):
 
     @staticmethod
     def resolve_avatar(self, info):
-        if self.avatar == '':
-            return
-        return f'https://{AWS_S3_CUSTOM_DOMAIN}/{self.avatar}'
+        if self.avatar:
+            return f'https://{AWS_S3_CUSTOM_DOMAIN}/{self.avatar}'
+        return
 
 
 class Query(graphene.ObjectType):
