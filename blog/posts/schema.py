@@ -226,8 +226,6 @@ class CreatePostMutation(graphene.Mutation):
     def mutate(root, info, **args):
         data = args.get('data')
 
-        print(data)
-
         if 'category' in data:
             try:
                 category = Category.objects.get(id=data.category)

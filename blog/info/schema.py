@@ -60,8 +60,6 @@ class UpdateInfoMutation(graphene.Mutation):
                 info.avatar.delete()
             else:
                 content_file = ContentFile(avatar_image.read())
-                print(avatar_image.name, type(avatar_image.name))
-                print(content_file, type(content_file))
                 info.avatar.save(avatar_image.name, content_file, save=True)
 
         try:
