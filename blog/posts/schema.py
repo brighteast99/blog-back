@@ -253,9 +253,9 @@ class CreateCategoryMutation(graphene.Mutation):
 
         if 'subcategory_of' in data:
             try:
-                supercategory = Category.objects.get(id=data.category)
+                supercategory = Category.objects.get(id=data.subcategory_of)
             except Category.DoesNotExist:
-                raise GraphQLError(f'Category with id {data.category} does not exist.')
+                raise GraphQLError(f'Category with id {data.subcategory_of} does not exist.')
         else:
             supercategory = None
 
