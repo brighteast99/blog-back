@@ -3,7 +3,7 @@ from blog.posts.models import Category, Post
 
 
 class CategoryAdmin(admin.ModelAdmin):
-    list_display = ('id', 'name', 'subcategory_of', )
+    list_display = ('id', 'name', 'subcategory_of', 'is_deleted', 'is_hidden', 'cover_image')
 
 
 admin.site.register(Category, CategoryAdmin)

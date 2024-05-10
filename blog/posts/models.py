@@ -1,12 +1,15 @@
 from django.db import models
 from mptt.models import MPTTModel, TreeForeignKey
 
+from blog.storage import Cafe24OBS
+
 
 class Category(MPTTModel):
     name = models.CharField(max_length=100)
     description = models.TextField(blank=True)
     is_hidden = models.BooleanField(default=False)
-    cover_image = models.URLField(blank=True, null=True)
+    is_deleted = models.BooleanField(default=False)
+    cover_image = models.ImageField(blank=True, null=True, storage=Cafe24OBS, upload_to='category-image/')
     subcategory_of = TreeForeignKey('self', null=True, blank=True, on_delete=models.CASCADE,
                                     related_name='subcategories')
 

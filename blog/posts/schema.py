@@ -1,12 +1,16 @@
 import json
 import graphene
+from django.core.files.base import ContentFile
 from django.db import DatabaseError, IntegrityError
 from django.db.models import Q
+from django.db.transaction import atomic
 from graphene_django import DjangoObjectType
+from graphene_file_upload.scalars import Upload
 from graphql import GraphQLError
 from graphql_jwt.decorators import login_required
 
 from blog.posts.models import Category, Post
+from blog.settings import AWS_S3_CUSTOM_DOMAIN
 
 
 class CategoryType(DjangoObjectType):
@@ -14,6 +18,7 @@ class CategoryType(DjangoObjectType):
     name = graphene.String()
     post_count = graphene.Int(exclude_subcategories=graphene.Boolean())
     subcategories = graphene.List(lambda: CategoryType)
+    cover_image = graphene.String()
 
     class Meta:
         model = Category
@@ -51,18 +56,21 @@ class CategoryType(DjangoObjectType):
 
     @staticmethod
     def resolve_post_count(self, info, exclude_subcategories=False):
+        posts = Post.objects.exclude(Q(is_deleted=True) | Q(category__is_deleted=True))
+
+        if not info.context.user.is_authenticated:
+            posts = posts.exclude(Q(is_hidden=True) | Q(category__is_hidden=True))
+
         if self.id is None:
-            posts = Post.objects
+            pass
         elif self.id == 0:
             posts = Post.objects.filter(category__isnull=True)
         else:
             if exclude_subcategories:
                 posts = self.posts
             else:
-                posts = Post.objects.filter(category__in=Category.get_descendants(self, include_self=True))
-
-        if not info.context.user.is_authenticated:
-            posts = posts.exclude(Q(is_hidden=True) | Q(category__is_hidden=True))
+                posts = Post.objects.filter(category__in=Category.get_descendants(self, include_self=True),
+                                            category__is_deleted=False)
 
         return posts.count()
 
@@ -75,10 +83,17 @@ class CategoryType(DjangoObjectType):
         else:
             posts = self.posts.all()
 
+        posts = posts.exclude(is_deleted=True)
         if not info.context.user.is_authenticated:
             posts = posts.exclude(is_hidden=True)
 
         return posts
+
+    @staticmethod
+    def resolve_cover_image(self, info):
+        if self.cover_image:
+            return f'https://{AWS_S3_CUSTOM_DOMAIN}/{self.cover_image}'
+        return None
 
 
 class PostType(DjangoObjectType):
@@ -96,6 +111,7 @@ class PostType(DjangoObjectType):
 class Query(graphene.ObjectType):
     categories = graphene.List(CategoryType)
     category_list = graphene.JSONString()
+    valid_supercategories = graphene.List(CategoryType, id=graphene.Int(required=True))
     category_info = graphene.Field(CategoryType, id=graphene.Int())
     post_list = graphene.List(PostType, category_id=graphene.Int())
     post = graphene.Field(PostType, id=graphene.Int(required=True))
@@ -110,15 +126,15 @@ class Query(graphene.ObjectType):
     @staticmethod
     def resolve_category_list(root, info):
         authenticated = info.context.user.is_authenticated
-        root_categories = Category.objects.root_nodes()
-        all_posts = Post.objects
+        root_categories = Category.objects.root_nodes().filter(is_deleted=False)
+        all_posts = Post.objects.exclude(Q(is_deleted=True)|Q(category__is_deleted=True))
 
         if not authenticated:
             root_categories = root_categories.exclude(is_hidden=True)
             all_posts = all_posts.exclude(Q(category__is_hidden=True) | Q(is_hidden=True))
 
         def category_to_dict(instance):
-            subcategories = instance.subcategories.all()
+            subcategories = instance.subcategories.filter(is_deleted=False)
 
             if not authenticated:
                 subcategories = subcategories.exclude(is_hidden=True)
@@ -147,6 +163,16 @@ class Query(graphene.ObjectType):
         })
         return json.dumps(categories_list)
 
+
+    @login_required
+    @staticmethod
+    def resolve_valid_supercategories(root, info, **args):
+        id = args.get('id')
+        result = Category.objects.filter(id=id).first()
+
+        return Category.objects.exclude(Q(id__in=result.get_descendants(include_self=True))|Q(is_deleted=True))
+
+
     @staticmethod
     def resolve_category_info(root, info, **args):
         id = args.get('id')
@@ -169,10 +195,15 @@ class Query(graphene.ObjectType):
         authenticated = info.context.user.is_authenticated
         category_id = args.get('category_id')
 
+        posts = Post.objects.exclude(Q(is_deleted=True) | Q(category__is_deleted=True))
+
+        if not authenticated:
+            posts = posts.exclude(Q(is_hidden=True) | Q(category__is_hidden=True))
+
         if category_id is None:
-            posts = Post.objects.all()
+            pass
         elif category_id == 0:
-            posts = Post.objects.filter(category__isnull=True)
+            posts = posts.filter(category__isnull=True)
         else:
             try:
                 category = Category.objects.get(id=category_id)
@@ -182,13 +213,7 @@ class Query(graphene.ObjectType):
                 return []
 
             subcategories = category.get_descendants(include_self=True)
-            if not authenticated:
-                subcategories = subcategories.exclude(is_hidden=True)
-
-            posts = Post.objects.filter(category__in=subcategories)
-
-        if not authenticated:
-            posts = posts.exclude(Q(is_hidden=True) | Q(category__is_hidden=True))
+            posts = posts.filter(category__in=subcategories)
 
         return posts
 
@@ -204,6 +229,120 @@ class Query(graphene.ObjectType):
             raise GraphQLError('You do not have permission to perform this action')
 
         return post
+
+
+class CategoryInput(graphene.InputObjectType):
+    name = graphene.String(required=True)
+    description = graphene.String(required=True)
+    is_hidden = graphene.Boolean(required=True)
+    cover_image = Upload()
+    subcategory_of = graphene.Int()
+
+
+class CreateCategoryMutation(graphene.Mutation):
+    class Arguments:
+        data = CategoryInput(required=True)
+
+    success = graphene.Boolean()
+    created_category = graphene.Field(CategoryType)
+
+    @staticmethod
+    @login_required
+    def mutate(root, info, **args):
+        data = args.get('data')
+
+        if 'subcategory_of' in data:
+            try:
+                supercategory = Category.objects.get(id=data.category)
+            except Category.DoesNotExist:
+                raise GraphQLError(f'Category with id {data.category} does not exist.')
+        else:
+            supercategory = None
+
+        try:
+            category = Category.objects.create(name=data.name,
+                                               description=data.description,
+                                               is_hidden=data.is_hidden,
+                                               cover_image=data.cover_image,
+                                               subcategory_of=supercategory)
+        except (DatabaseError, IntegrityError) as e:
+            raise GraphQLError(f'Failed to create category: {e}')
+
+        return CreateCategoryMutation(success=True, created_category=category)
+
+
+class UpdateCategoryMutation(graphene.Mutation):
+    class Arguments:
+        id = graphene.Int(required=True)
+        data = CategoryInput(required=True)
+
+    success = graphene.Boolean()
+    updated_category = graphene.Field(CategoryType)
+
+    @staticmethod
+    @login_required
+    @atomic
+    def mutate(root, info, **args):
+        category_id = args.get('id')
+
+        try:
+            category = Category.objects.get(id=category_id)
+        except Category.DoesNotExist:
+            return UpdateCategoryMutation(success=False, updated_category=None)
+
+        data = args.get('data')
+        category.name = data.get('name')
+        if 'subcategory_of' in data:
+            try:
+                category.subcategory_of = Category.objects.get(id=data.subcategory_of)
+            except Category.DoesNotExist:
+                raise GraphQLError(f'Category with id {data.subcategory_of} does not exist.')
+        else:
+            category.subcategory_of = None
+        category.description = data.get('description')
+        is_hidden = data.get('is_hidden')
+        if is_hidden and not category.is_hidden:
+            category.get_descendants().update(is_hidden=True)
+        category.is_hidden = is_hidden
+
+        if 'cover_image' in data:
+            cover_image = data.get('cover_image')
+            if cover_image is None:
+                category.cover_image.delete()
+            else:
+                content_file = ContentFile(cover_image.read())
+                category.cover_image.save(cover_image.name, content_file, save=True)
+
+        try:
+            category.save()
+        except (DatabaseError, IntegrityError) as e:
+            return UpdateCategoryMutation(success=False, updated_category=None)
+
+        return UpdateCategoryMutation(success=True, updated_category=category)
+
+
+class DeleteCategoryMutation(graphene.Mutation):
+    class Arguments:
+        id = graphene.Int(required=True)
+
+    success = graphene.Boolean()
+
+    @staticmethod
+    @atomic
+    @login_required
+    def mutate(self, info, **args):
+        category_id = args.get('id')
+
+        try:
+            category = Category.objects.get(id=category_id)
+            category.get_descendants().update(is_deleted=True)
+            category.is_deleted = True
+            category.save()
+            return DeleteCategoryMutation(success=True)
+        except Category.DoesNotExist:
+            raise GraphQLError(f'Post with id {category_id} does not exist.')
+        except DatabaseError:
+            raise GraphQLError(f'Failed to delete category with id {category_id}')
 
 
 class PostInput(graphene.InputObjectType):
@@ -267,7 +406,10 @@ class UpdatePostMutation(graphene.Mutation):
         data = args.get('data')
         post.title = data.get('title', post.title)
         if 'category' in data:
-            post.category = Category.objects.get(id=data.category)
+            try:
+                post.category = Category.objects.get(id=data.category)
+            except Category.DoesNotExist:
+                raise GraphQLError(f'Category with id {data.category} does not exist.')
         else:
             post.category = None
         post.content = data.get('content', post.content)
@@ -305,6 +447,9 @@ class DeletePostMutation(graphene.Mutation):
 
 
 class Mutation(graphene.ObjectType):
+    create_category = CreateCategoryMutation.Field()
+    update_category = UpdateCategoryMutation.Field()
+    delete_category = DeleteCategoryMutation.Field()
     create_post = CreatePostMutation.Field()
     update_post = UpdatePostMutation.Field()
     delete_post = DeletePostMutation.Field()
