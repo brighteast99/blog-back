@@ -1,4 +1,6 @@
 import json
+from urllib.parse import urlparse
+
 import graphene
 from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
@@ -349,6 +351,7 @@ class PostInput(graphene.InputObjectType):
     content = graphene.String(required=True)
     is_hidden = graphene.Boolean(required=True)
     thumbnail = graphene.String(required=False)
+    images = graphene.List(graphene.String, required=True, default=list)
 
 
 class CreatePostMutation(graphene.Mutation):
@@ -376,7 +379,8 @@ class CreatePostMutation(graphene.Mutation):
                                        category=category,
                                        content=data.content,
                                        is_hidden=data.is_hidden,
-                                       thumbnail=data.thumbnail)
+                                       thumbnail=data.thumbnail,
+                                       images=data.images)
         except (DatabaseError, IntegrityError) as e:
             raise GraphQLError(f'Failed to create post: {e}')
 
@@ -403,7 +407,7 @@ class UpdatePostMutation(graphene.Mutation):
 
         data = args.get('data')
         post.title = data.get('title', post.title)
-        if 'category' in data:
+        if 'category' in data and data.category != 0:
             try:
                 post.category = Category.objects.get(id=data.category)
             except Category.DoesNotExist:
@@ -412,7 +416,8 @@ class UpdatePostMutation(graphene.Mutation):
             post.category = None
         post.content = data.get('content', post.content)
         post.is_hidden = data.get('is_hidden', post.is_hidden)
-        post.thumbnail = data.get('thumbnail', post.thumbnail)
+        post.thumbnail = data.get('thumbnail')
+        post.images = data.get('images', post.images)
 
         try:
             post.save()
@@ -446,19 +451,33 @@ class DeletePostMutation(graphene.Mutation):
 
 class UploadImageMutation(graphene.Mutation):
     class Arguments:
-        files = graphene.List(Upload, required=True)
+        file = Upload(required=True)
 
-    urls = graphene.List(graphene.String)
+    url = graphene.String()
 
     @staticmethod
     @login_required
     def mutate(self, info, **args):
-        files = args.get('files')
+        file = args.get('file')
+        path = default_storage.save(f'media/{file.name}', ContentFile(file.read()))
+        return UploadImageMutation(url=default_storage.url(path))
 
-        urls = []
-        for file in files:
-            path = default_storage.save(f'media/{file.name}', ContentFile(file.read()))
-            urls.append(default_storage.url(path))
+
+class DeleteImageMutation(graphene.Mutation):
+    class Arguments:
+        url = graphene.String(required=True)
+
+    success = graphene.Boolean()
+
+    @staticmethod
+    @login_required
+    def mutate(self, info, **args):
+        file_path = '/'.join(urlparse(args.get('url')).path.split('/', 2)[2:])
+
+        if default_storage.exists(file_path):
+            default_storage.delete(file_path)
+            return DeleteImageMutation(success=True)
+        return DeleteImageMutation(success=False)
 
 
 class Mutation(graphene.ObjectType):
@@ -469,6 +488,7 @@ class Mutation(graphene.ObjectType):
     update_post = UpdatePostMutation.Field()
     delete_post = DeletePostMutation.Field()
     upload_image = UploadImageMutation.Field()
+    delete_image = DeleteImageMutation.Field()
 
 
 schema = graphene.Schema(query=Query, mutation=Mutation)

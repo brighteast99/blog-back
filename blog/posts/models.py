@@ -1,3 +1,4 @@
+from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from mptt.models import MPTTModel, TreeForeignKey
 
@@ -34,6 +35,7 @@ class Post(models.Model):
     is_deleted = models.BooleanField(default=False)
     content = models.TextField(blank=True, null=True)
     thumbnail = models.URLField(blank=True, null=True)
+    images = ArrayField(models.URLField(), default=list)
     created_at = models.DateTimeField(null=False, auto_now_add=True)
     updated_at = models.DateTimeField(null=False, auto_now=True)
 
