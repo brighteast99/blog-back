@@ -5,7 +5,6 @@ from graphene_django import DjangoObjectType
 from graphene_file_upload.scalars import Upload
 from graphql_jwt.decorators import login_required
 from blog.info.models import Info
-from blog.settings import AWS_S3_CUSTOM_DOMAIN
 
 
 class InfoType(DjangoObjectType):
@@ -17,9 +16,7 @@ class InfoType(DjangoObjectType):
 
     @staticmethod
     def resolve_avatar(self, info):
-        if self.avatar:
-            return f'https://{AWS_S3_CUSTOM_DOMAIN}/{self.avatar}'
-        return
+        return self.avatar.url if self.avatar else None
 
 
 class Query(graphene.ObjectType):

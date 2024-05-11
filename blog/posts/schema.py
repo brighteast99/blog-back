@@ -1,6 +1,7 @@
 import json
 import graphene
 from django.core.files.base import ContentFile
+from django.core.files.storage import default_storage
 from django.db import DatabaseError, IntegrityError
 from django.db.models import Q
 from django.db.transaction import atomic
@@ -10,7 +11,6 @@ from graphql import GraphQLError
 from graphql_jwt.decorators import login_required
 
 from blog.posts.models import Category, Post
-from blog.settings import AWS_S3_CUSTOM_DOMAIN
 
 
 class CategoryType(DjangoObjectType):
@@ -91,9 +91,7 @@ class CategoryType(DjangoObjectType):
 
     @staticmethod
     def resolve_cover_image(self, info):
-        if self.cover_image:
-            return f'https://{AWS_S3_CUSTOM_DOMAIN}/{self.cover_image}'
-        return None
+        return self.cover_image.url if self.cover_image else None
 
 
 class PostType(DjangoObjectType):
@@ -446,6 +444,23 @@ class DeletePostMutation(graphene.Mutation):
             raise GraphQLError(f'Failed to delete post with id {post_id}')
 
 
+class UploadImageMutation(graphene.Mutation):
+    class Arguments:
+        files = graphene.List(Upload, required=True)
+
+    urls = graphene.List(graphene.String)
+
+    @staticmethod
+    @login_required
+    def mutate(self, info, **args):
+        files = args.get('files')
+
+        urls = []
+        for file in files:
+            path = default_storage.save(f'media/{file.name}', ContentFile(file.read()))
+            urls.append(default_storage.url(path))
+
+
 class Mutation(graphene.ObjectType):
     create_category = CreateCategoryMutation.Field()
     update_category = UpdateCategoryMutation.Field()
@@ -453,6 +468,7 @@ class Mutation(graphene.ObjectType):
     create_post = CreatePostMutation.Field()
     update_post = UpdatePostMutation.Field()
     delete_post = DeletePostMutation.Field()
+    upload_image = UploadImageMutation.Field()
 
 
 schema = graphene.Schema(query=Query, mutation=Mutation)
