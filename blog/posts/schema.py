@@ -20,6 +20,7 @@ class CategoryType(DjangoObjectType):
     name = graphene.String()
     post_count = graphene.Int(exclude_subcategories=graphene.Boolean())
     subcategories = graphene.List(lambda: CategoryType)
+    ancestors = graphene.List(lambda: CategoryType)
     cover_image = graphene.String()
 
     class Meta:
@@ -55,6 +56,14 @@ class CategoryType(DjangoObjectType):
         if not info.context.user.is_authenticated:
             self.subcategories.exclude(is_hidden=True)
         return self.subcategories.all()
+
+    @staticmethod
+    def resolve_ancestors(self, info):
+        if self.id is None or self.id == 0:
+            return []
+        if not info.context.user.is_authenticated and self.is_hidden:
+            raise GraphQLError('You do not have permission to perform this action')
+        return self.get_ancestors()
 
     @staticmethod
     def resolve_post_count(self, info, exclude_subcategories=False):
