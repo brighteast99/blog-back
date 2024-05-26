@@ -1,4 +1,5 @@
 import json
+import uuid
 from urllib.parse import urlparse
 
 import graphene
@@ -673,7 +674,8 @@ class UploadImageMutation(graphene.Mutation):
     @login_required
     def mutate(self, info, **args):
         file = args.get('file')
-        path = default_storage.save(f'media/{file.name}', ContentFile(file.read()))
+        name, ext = file.name.rsplit('.', 1)
+        path = default_storage.save(f'media/{name}_{uuid.uuid4()}.{ext}', ContentFile(file.read()))
         return UploadImageMutation(url=default_storage.url(path))
 
 
