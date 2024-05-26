@@ -12,7 +12,7 @@ from graphene_file_upload.scalars import Upload
 from graphql import GraphQLError
 from graphql_jwt.decorators import login_required
 
-from blog.posts.models import Category, Post
+from blog.posts.models import Category, Post, Template, Draft
 
 
 class CategoryType(DjangoObjectType):
@@ -117,6 +117,40 @@ class PostType(DjangoObjectType):
         return self.category if self.category is not None else Category(id=0)
 
 
+class DraftType(DjangoObjectType):
+    id = graphene.Int()
+    category = graphene.Field(CategoryType)
+    summary = graphene.String()
+
+    class Meta:
+        model = Draft
+        fields = '__all__'
+
+    @staticmethod
+    def resolve_id(self, info):
+        return self.id
+
+    @staticmethod
+    def resolve_category(self, info):
+        return self.category if self.category is not None else Category(id=0)
+
+    @staticmethod
+    def resolve_summary(self, info):
+        return f'[{self.category.name if self.category is not None else "분류 미지정"}] {self.title}'
+
+
+class TemplateType(DjangoObjectType):
+    id = graphene.Int()
+
+    class Meta:
+        model = Template
+        fields = '__all__'
+
+    @staticmethod
+    def resolve_id(self, info):
+        return self.id
+
+
 class Query(graphene.ObjectType):
     categories = graphene.List(CategoryType)
     category_list = graphene.JSONString()
@@ -124,6 +158,10 @@ class Query(graphene.ObjectType):
     category_info = graphene.Field(CategoryType, id=graphene.Int())
     post_list = graphene.List(PostType, category_id=graphene.Int())
     post = graphene.Field(PostType, id=graphene.Int(required=True))
+    draft_list = graphene.List(DraftType)
+    draft = graphene.Field(DraftType, id=graphene.Int(required=True))
+    template_list = graphene.List(TemplateType)
+    template = graphene.Field(TemplateType, id=graphene.Int(required=True))
 
     @staticmethod
     def resolve_categories(root, info):
@@ -238,6 +276,36 @@ class Query(graphene.ObjectType):
             raise GraphQLError('You do not have permission to perform this action')
 
         return post
+
+    @staticmethod
+    @login_required
+    def resolve_draft_list(root, info, **args):
+        return Draft.objects.all()
+
+    @staticmethod
+    @login_required
+    def resolve_draft(root, info, **args):
+        try:
+            draft = Draft.objects.get(id=args.get('id'))
+        except Draft.DoesNotExist:
+            return None
+
+        return draft
+
+    @staticmethod
+    @login_required
+    def resolve_template_list(root, info, **args):
+        return Template.objects.all()
+
+    @staticmethod
+    @login_required
+    def resolve_template(root, info, **args):
+        try:
+            template = Template.objects.get(id=args.get('id'))
+        except Template.DoesNotExist:
+            return None
+
+        return template
 
 
 class CategoryInput(graphene.InputObjectType):
@@ -458,6 +526,143 @@ class DeletePostMutation(graphene.Mutation):
             raise GraphQLError(f'Failed to delete post with id {post_id}')
 
 
+class CreateDraftMutation(graphene.Mutation):
+    class Arguments:
+        data = PostInput(required=True)
+
+    success = graphene.Boolean()
+    created_draft = graphene.Field(DraftType)
+
+    @staticmethod
+    @login_required
+    def mutate(root, info, **args):
+        data = args.get('data')
+
+        if 'category' in data:
+            try:
+                category = Category.objects.get(id=data.category)
+            except Category.DoesNotExist:
+                raise GraphQLError(f'Category with id {data.category} does not exist.')
+        else:
+            category = None
+
+        try:
+            draft = Draft.objects.create(title=data.title,
+                                         category=category,
+                                         content=data.content,
+                                         is_hidden=data.is_hidden,
+                                         thumbnail=data.thumbnail,
+                                         images=data.images)
+        except (DatabaseError, IntegrityError) as e:
+            raise GraphQLError(f'Failed to create post: {e}')
+
+        return CreateDraftMutation(success=True, created_draft=draft)
+
+
+class DeleteDraftMutation(graphene.Mutation):
+    class Arguments:
+        id = graphene.Int(required=True)
+
+    success = graphene.Boolean()
+
+    @staticmethod
+    @login_required
+    def mutate(self, info, **args):
+        draft_id = args.get('id')
+
+        try:
+            draft = Draft.objects.get(id=draft_id)
+            draft.delete()
+            return DeleteDraftMutation(success=True)
+        except Draft.DoesNotExist:
+            raise GraphQLError(f'Draft with id {draft_id} does not exist.')
+        except DatabaseError:
+            raise GraphQLError(f'Failed to delete draft with id {draft_id}')
+
+
+class TemplateInput(graphene.InputObjectType):
+    name = graphene.String(required=True)
+    content = graphene.String(required=True)
+    thumbnail = graphene.String(required=False)
+    images = graphene.List(graphene.String, required=True, default=list)
+
+
+class CreateTemplateMutation(graphene.Mutation):
+    class Arguments:
+        data = TemplateInput(required=True)
+
+    success = graphene.Boolean()
+    created_template = graphene.Field(TemplateType)
+
+    @staticmethod
+    @login_required
+    def mutate(root, info, **args):
+        data = args.get('data')
+
+        try:
+            template = Template.objects.create(name=data.name,
+                                               content=data.content,
+                                               thumbnail=data.thumbnail,
+                                               images=data.images)
+        except (DatabaseError, IntegrityError) as e:
+            raise GraphQLError(f'Failed to create template: {e}')
+
+        return CreateTemplateMutation(success=True, created_template=template)
+
+
+class UpdateTemplateMutation(graphene.Mutation):
+    class Arguments:
+        id = graphene.Int(required=True)
+        data = TemplateInput(required=True)
+
+    success = graphene.Boolean()
+    updated_template = graphene.Field(TemplateType)
+
+    @staticmethod
+    @login_required
+    def mutate(root, info, **args):
+        template_id = args.get('id')
+
+        try:
+            template = Template.objects.get(id=template_id)
+        except Template.DoesNotExist:
+            return UpdateTemplateMutation(success=False, updated_template=None)
+
+        data = args.get('data')
+        template.name = data.get('name', template.name)
+        template.content = data.get('content', template.content)
+        template.thumbnail = data.get('thumbnail')
+        template.images = data.get('images', template.images)
+
+        try:
+            template.save()
+        except (DatabaseError, IntegrityError) as e:
+            return UpdateTemplateMutation(success=False, updated_template=None)
+
+        return UpdateTemplateMutation(success=True, updated_template=template)
+
+
+class DeleteTemplateMutation(graphene.Mutation):
+    class Arguments:
+        id = graphene.Int(required=True)
+
+    success = graphene.Boolean()
+
+    @staticmethod
+    @login_required
+    def mutate(self, info, **args):
+        template_id = args.get('id')
+
+        try:
+            template = Template.objects.get(id=template_id)
+            template.delete()
+            return DeleteTemplateMutation(success=True)
+        except Template.DoesNotExist:
+            raise GraphQLError(f'Tempalte with id {template_id} does not exist.')
+        except DatabaseError:
+            raise GraphQLError(f'Failed to delete template with id {template_id}')
+
+
 class UploadImageMutation(graphene.Mutation):
     class Arguments:
         file = Upload(required=True)
@@ -496,6 +701,11 @@ class Mutation(graphene.ObjectType):
     create_post = CreatePostMutation.Field()
     update_post = UpdatePostMutation.Field()
     delete_post = DeletePostMutation.Field()
+    create_draft = CreateDraftMutation.Field()
+    delete_draft = DeleteDraftMutation.Field()
+    create_template = CreateTemplateMutation.Field()
+    update_template = UpdateTemplateMutation.Field()
+    delete_template = DeleteTemplateMutation.Field()
     upload_image = UploadImageMutation.Field()
     delete_image = DeleteImageMutation.Field()
 

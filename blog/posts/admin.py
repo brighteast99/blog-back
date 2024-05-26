@@ -1,5 +1,5 @@
 from django.contrib import admin
-from blog.posts.models import Category, Post
+from blog.posts.models import Category, Post, Template
 
 
 class CategoryAdmin(admin.ModelAdmin):
@@ -14,3 +14,10 @@ class PostAdmin(admin.ModelAdmin):
 
 
 admin.site.register(Post, PostAdmin)
+
+
+class TemplateAdmin(admin.ModelAdmin):
+    list_display = ('id', '__str__', 'content', )
+
+
+admin.site.register(Template, TemplateAdmin)
