@@ -166,10 +166,11 @@ class Query(graphene.ObjectType):
 
     @staticmethod
     def resolve_categories(root, info):
+        categories = Category.objects.filter(is_deleted=False)
         if not info.context.user.is_authenticated:
-            return Category.objects.exclude(is_hidden=True)
+            return categories.exclude(is_hidden=True)
 
-        return Category.objects.all()
+        return categories
 
     @staticmethod
     def resolve_category_list(root, info):
