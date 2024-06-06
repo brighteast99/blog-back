@@ -1,9 +1,14 @@
 from django.contrib import admin
+from mptt.admin import DraggableMPTTAdmin
 from blog.posts.models import Category, Post, Template
 
 
-class CategoryAdmin(admin.ModelAdmin):
-    list_display = ('id', 'name', 'subcategory_of', 'is_deleted', 'is_hidden', 'cover_image')
+class CategoryAdmin(DraggableMPTTAdmin):
+    list_display = (
+        'tree_actions',
+        'id', 'indented_title',
+        'cover_image', 'is_deleted', 'is_hidden')
+    mptt_level_indent = 20
 
 
 admin.site.register(Category, CategoryAdmin)

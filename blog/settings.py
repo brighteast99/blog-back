@@ -63,7 +63,8 @@ INSTALLED_APPS = [
     'graphql_jwt.refresh_token.apps.RefreshTokenConfig',
     'blog.info',
     'blog.posts',
-    'blog.jwt'
+    'blog.jwt',
+    'mptt'
 ]
 
 MIDDLEWARE = [
