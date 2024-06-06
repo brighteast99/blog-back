@@ -19,6 +19,7 @@ from blog.posts.models import Category, Post, Template, Draft
 class CategoryType(DjangoObjectType):
     id = graphene.Int()
     name = graphene.String()
+    level = graphene.Int()
     post_count = graphene.Int(exclude_subcategories=graphene.Boolean())
     subcategories = graphene.List(lambda: CategoryType)
     ancestors = graphene.List(lambda: CategoryType)
@@ -41,6 +42,13 @@ class CategoryType(DjangoObjectType):
             return "분류 미지정"
 
         return self.name
+
+    @staticmethod
+    def resolve_level(self, info):
+        if self.id is None or self.id == 0:
+            return 0
+
+        return self.level
 
     @staticmethod
     def resolve_description(self, info):
@@ -192,6 +200,7 @@ class Query(graphene.ObjectType):
                 'id': instance.id,
                 'isHidden': instance.is_hidden,
                 'name': instance.name,
+                'level': instance.level,
                 'postCount': all_posts.filter(category__in=instance.get_descendants(include_self=True)).count(),
                 'subcategories': [category_to_dict(subcategory)
                                   for subcategory in subcategories]
@@ -200,6 +209,7 @@ class Query(graphene.ObjectType):
 
         categories_list = [{
             'name': '전체 게시글',
+            'level': 0,
             'postCount': all_posts.count(),
             'subcategories': []
         }]
@@ -207,6 +217,7 @@ class Query(graphene.ObjectType):
         categories_list.append({
             'id': 0,
             'name': '분류 미지정',
+            'level': 0,
             'postCount': all_posts.filter(category__isnull=True).count(),
             'subcategories': []
         })
