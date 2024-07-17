@@ -58,7 +58,7 @@ INSTALLED_APPS = [
     'graphene_file_upload.django',
     'graphql_jwt.refresh_token.apps.RefreshTokenConfig',
     'blog.info',
-    'blog.posts',
+    'blog.core',
     'blog.jwt',
     'mptt'
 ]
