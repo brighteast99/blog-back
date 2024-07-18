@@ -1,18 +1,14 @@
 import graphene
 from graphql_jwt.decorators import login_required
+from blog.core.errors import NotFoundError
 
 from blog.core.models import Template
 from . import TemplateType
 
 
 class Query(graphene.ObjectType):
-    template_list = graphene.List(TemplateType)
     template = graphene.Field(TemplateType, id=graphene.Int(required=True))
-
-    @staticmethod
-    @login_required
-    def resolve_template_list(root, info, **args):
-        return Template.objects.all()
+    templates = graphene.List(TemplateType)
 
     @staticmethod
     @login_required
@@ -20,8 +16,11 @@ class Query(graphene.ObjectType):
         try:
             template = Template.objects.get(id=args.get('id'))
         except Template.DoesNotExist:
-            return None
+            raise NotFoundError()
 
         return template
 
-        return draft
+    @staticmethod
+    @login_required
+    def resolve_templates(root, info, **args):
+        return Template.objects.all()

@@ -48,6 +48,7 @@ class Post(BasePost):
     category = models.ForeignKey(
         Category, related_name='posts', on_delete=models.SET_NULL, null=True, blank=True
     )
+    text_content = models.TextField(blank=True, null=True)
     is_deleted = models.BooleanField(default=False)
     updated_at = models.DateTimeField(null=False, auto_now=True)
 

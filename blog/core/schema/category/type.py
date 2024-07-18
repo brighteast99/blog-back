@@ -1,7 +1,7 @@
 import graphene
 from django.db.models import Q
-from graphql import GraphQLError
 from graphene_django import DjangoObjectType
+from blog.core.errors import PermissionDeniedError
 
 from blog.core.models import Category, Post
 
@@ -10,7 +10,8 @@ class CategoryType(DjangoObjectType):
     id = graphene.Int()
     name = graphene.String()
     level = graphene.Int()
-    post_count = graphene.Int(exclude_subcategories=graphene.Boolean())
+    post_count = graphene.Int(
+        exclude_subcategories=graphene.Boolean(False))
     subcategories = graphene.List(lambda: CategoryType)
     ancestors = graphene.List(lambda: CategoryType)
     cover_image = graphene.String()
@@ -18,10 +19,6 @@ class CategoryType(DjangoObjectType):
     class Meta:
         model = Category
         fields = '__all__'
-
-    @staticmethod
-    def resolve_id(self, info):
-        return self.id
 
     @staticmethod
     def resolve_name(self, info):
@@ -61,8 +58,7 @@ class CategoryType(DjangoObjectType):
         if self.id is None or self.id == 0:
             return []
         if not info.context.user.is_authenticated and self.is_hidden:
-            raise GraphQLError(
-                'You do not have permission to perform this action')
+            raise PermissionDeniedError()
         return self.get_ancestors()
 
     @staticmethod

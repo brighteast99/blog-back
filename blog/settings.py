@@ -1,6 +1,6 @@
 import os
-from datetime import timedelta
 from pathlib import Path
+
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -55,6 +55,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'corsheaders',
     'graphene_django',
+    'django_filters',
     'graphene_file_upload.django',
     'graphql_jwt.refresh_token.apps.RefreshTokenConfig',
     'blog.info',

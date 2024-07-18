@@ -1,8 +1,10 @@
 import graphene
+from graphene.relay import Node
 from graphene_django import DjangoObjectType
 
 from blog.core.models import Category, Post
 from blog.core.schema.category.type import CategoryType
+from .filter import PostFilter
 
 
 class PostType(DjangoObjectType):
@@ -10,6 +12,8 @@ class PostType(DjangoObjectType):
 
     class Meta:
         model = Post
+        filterset_class = PostFilter
+        interfaces = (Node, )
         fields = '__all__'
 
     @staticmethod
