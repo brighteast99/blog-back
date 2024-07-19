@@ -66,7 +66,7 @@ class Query(graphene.ObjectType):
                 'isHidden': instance.is_hidden,
                 'name': instance.name,
                 'level': instance.level,
-                'postCount': instance.post_count,
+                'postCount': all_posts.filter(category__in=instance.get_descendants(include_self=True)).count(),
                 'subcategories': [category_to_dict(subcategory)
                                   for subcategory in subcategories]
             }
