@@ -4,7 +4,7 @@ from django.db.transaction import atomic
 from django.core.files.base import ContentFile
 from graphql import GraphQLError
 from graphene_file_upload.scalars import Upload
-from graphql_jwt.decorators import login_required
+from blog.utils.decorators import login_required
 
 from blog.core.models import Category
 from . import CategoryType

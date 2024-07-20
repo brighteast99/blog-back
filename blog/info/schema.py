@@ -3,7 +3,7 @@ from django.core.files.base import ContentFile
 from django.db import DatabaseError, IntegrityError
 from graphene_django import DjangoObjectType
 from graphene_file_upload.scalars import Upload
-from graphql_jwt.decorators import login_required
+from blog.utils.decorators import login_required
 from blog.info.models import Info
 
 

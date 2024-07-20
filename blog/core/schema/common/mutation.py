@@ -3,7 +3,7 @@ import graphene
 from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
 from graphene_file_upload.scalars import Upload
-from graphql_jwt.decorators import login_required
+from blog.utils.decorators import login_required
 from urllib.parse import urlparse
 
 

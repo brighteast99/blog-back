@@ -1,5 +1,5 @@
 import graphene
-from graphql_jwt.decorators import login_required
+from blog.utils.decorators import login_required
 from blog.core.errors import NotFoundError
 
 from blog.core.models import Draft

@@ -1,7 +1,7 @@
 import json
 import graphene
 from django.db.models import Q
-from graphql_jwt.decorators import login_required
+from blog.utils.decorators import login_required
 from blog.core.errors import NotFoundError, PermissionDeniedError
 
 from blog.core.models import Category, Post

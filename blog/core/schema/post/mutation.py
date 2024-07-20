@@ -1,7 +1,7 @@
 import graphene
 from django.db import DatabaseError, IntegrityError
 from graphql import GraphQLError
-from graphql_jwt.decorators import login_required
+from blog.utils.decorators import login_required
 
 from blog.core.models import Category, Post
 from . import PostType
