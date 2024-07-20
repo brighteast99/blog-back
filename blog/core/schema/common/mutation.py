@@ -3,8 +3,9 @@ import graphene
 from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
 from graphene_file_upload.scalars import Upload
-from blog.utils.decorators import login_required
 from urllib.parse import urlparse
+from blog.utils.decorators import login_required
+from blog.core.errors import InternalServerError
 
 
 class UploadImageMutation(graphene.Mutation):
@@ -37,7 +38,7 @@ class DeleteImageMutation(graphene.Mutation):
         if default_storage.exists(file_path):
             default_storage.delete(file_path)
             return DeleteImageMutation(success=True)
-        return DeleteImageMutation(success=False)
+        raise InternalServerError()
 
 
 class Mutation(graphene.ObjectType):

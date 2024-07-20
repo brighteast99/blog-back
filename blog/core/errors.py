@@ -1,19 +1,27 @@
 from graphql import GraphQLError
 
 
-class InvalidValueError(GraphQLError):
-    def __init__(self, message='Invalid value'):
+class InformativeGraphQLError(GraphQLError):
+    def __init__(self, message, code):
         super().__init__(message, extensions={
-            "type": self.__class__.__name__, "errorCode": 400})
+            "type": self.__class__.__name__, "code": code})
 
 
-class NotFoundError(GraphQLError):
-    def __init__(self, message='Target not found'):
-        super().__init__(message, extensions={
-            "type": self.__class__.__name__, "errorCode": 404})
+class InvalidValueError(InformativeGraphQLError):
+    def __init__(self, message='유효하지 않은 요청입니다'):
+        super().__init__(message, code=400)
 
 
-class PermissionDeniedError(GraphQLError):
+class NotFoundError(InformativeGraphQLError):
+    def __init__(self, message='항목을 찾을 수 없습니다'):
+        super().__init__(message, code=404)
+
+
+class PermissionDeniedError(InformativeGraphQLError):
     def __init__(self, message='권한이 없습니다'):
-        super().__init__(message, extensions={
-            "type": self.__class__.__name__, "errorCode": 403})
+        super().__init__(message, code=403)
+
+
+class InternalServerError(InformativeGraphQLError):
+    def __init__(self, message='요청을 처리하지 못했습니다'):
+        super().__init__(message, code=500)

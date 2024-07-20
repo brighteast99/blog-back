@@ -1,7 +1,7 @@
 import graphene
-from django.db import DatabaseError, IntegrityError
-from graphql import GraphQLError
 from blog.utils.decorators import login_required
+from django.db import DatabaseError, IntegrityError
+from blog.core.errors import InternalServerError, NotFoundError
 
 from blog.core.models import Category, Draft
 from . import DraftType
@@ -32,8 +32,7 @@ class CreateDraftMutation(graphene.Mutation):
             try:
                 category = Category.objects.get(id=data.category)
             except Category.DoesNotExist:
-                raise GraphQLError(
-                    f'Category with id {data.category} does not exist.')
+                NotFoundError('게시판을 찾을 수 없습니다')
         else:
             category = None
 
@@ -45,7 +44,7 @@ class CreateDraftMutation(graphene.Mutation):
                                          thumbnail=data.thumbnail,
                                          images=data.images)
         except (DatabaseError, IntegrityError) as e:
-            raise GraphQLError(f'Failed to create post: {e}')
+            raise InternalServerError()
 
         return CreateDraftMutation(success=True, created_draft=draft)
 
@@ -66,9 +65,9 @@ class DeleteDraftMutation(graphene.Mutation):
             draft.delete()
             return DeleteDraftMutation(success=True)
         except Draft.DoesNotExist:
-            raise GraphQLError(f'Draft with id {draft_id} does not exist.')
+            raise NotFoundError('임시 저장본을 찾을 수 없습니다')
         except DatabaseError:
-            raise GraphQLError(f'Failed to delete draft with id {draft_id}')
+            raise InternalServerError()
 
 
 class Mutation(graphene.ObjectType):

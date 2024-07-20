@@ -3,6 +3,7 @@ from django.core.files.base import ContentFile
 from django.db import DatabaseError, IntegrityError
 from graphene_django import DjangoObjectType
 from graphene_file_upload.scalars import Upload
+from blog.core.errors import InternalServerError
 from blog.utils.decorators import login_required
 from blog.info.models import Info
 
@@ -62,7 +63,7 @@ class UpdateInfoMutation(graphene.Mutation):
         try:
             info.save()
         except (DatabaseError, IntegrityError):
-            return UpdateInfoMutation(success=False, updated_info=None)
+            raise InternalServerError()
 
         return UpdateInfoMutation(success=True, updated_info=info)
 

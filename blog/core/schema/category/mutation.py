@@ -1,10 +1,10 @@
 import graphene
-from django.db import DatabaseError, IntegrityError
 from django.db.transaction import atomic
 from django.core.files.base import ContentFile
-from graphql import GraphQLError
 from graphene_file_upload.scalars import Upload
 from blog.utils.decorators import login_required
+from django.db import DatabaseError, IntegrityError
+from blog.core.errors import InternalServerError, NotFoundError
 
 from blog.core.models import Category
 from . import CategoryType
@@ -34,8 +34,7 @@ class CreateCategoryMutation(graphene.Mutation):
             try:
                 supercategory = Category.objects.get(id=data.subcategory_of)
             except Category.DoesNotExist:
-                raise GraphQLError(
-                    f'Category with id {data.subcategory_of} does not exist.')
+                raise NotFoundError('게시판을 찾을 수 없습니다')
         else:
             supercategory = None
 
@@ -46,7 +45,7 @@ class CreateCategoryMutation(graphene.Mutation):
                                                cover_image=data.cover_image,
                                                subcategory_of=supercategory)
         except (DatabaseError, IntegrityError) as e:
-            raise GraphQLError(f'Failed to create category: {e}')
+            raise InternalServerError()
 
         return CreateCategoryMutation(success=True, created_category=category)
 
@@ -68,7 +67,7 @@ class UpdateCategoryMutation(graphene.Mutation):
         try:
             category = Category.objects.get(id=category_id)
         except Category.DoesNotExist:
-            return UpdateCategoryMutation(success=False, updated_category=None)
+            raise NotFoundError('게시판을 찾을 수 없습니다')
 
         data = args.get('data')
         category.name = data.get('name')
@@ -77,8 +76,7 @@ class UpdateCategoryMutation(graphene.Mutation):
                 category.subcategory_of = Category.objects.get(
                     id=data.subcategory_of)
             except Category.DoesNotExist:
-                raise GraphQLError(
-                    f'Category with id {data.subcategory_of} does not exist.')
+                raise NotFoundError('게시판을 찾을 수 없습니다')
         else:
             category.subcategory_of = None
         category.description = data.get('description')
@@ -99,7 +97,7 @@ class UpdateCategoryMutation(graphene.Mutation):
         try:
             category.save()
         except (DatabaseError, IntegrityError) as e:
-            return UpdateCategoryMutation(success=False, updated_category=None)
+            raise InternalServerError()
 
         return UpdateCategoryMutation(success=True, updated_category=category)
 
@@ -123,10 +121,9 @@ class DeleteCategoryMutation(graphene.Mutation):
             category.save()
             return DeleteCategoryMutation(success=True)
         except Category.DoesNotExist:
-            raise GraphQLError(f'Post with id {category_id} does not exist.')
+            raise NotFoundError('게시판을 찾을 수 없습니다')
         except DatabaseError:
-            raise GraphQLError(
-                f'Failed to delete category with id {category_id}')
+            raise InternalServerError()
 
 
 class Mutation(graphene.ObjectType):

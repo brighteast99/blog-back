@@ -1,6 +1,7 @@
 import graphene
 from django.db import DatabaseError, IntegrityError
 from graphql import GraphQLError
+from blog.core.errors import InternalServerError, NotFoundError
 from blog.utils.decorators import login_required
 
 from blog.core.models import Category, Post
@@ -32,8 +33,7 @@ class CreatePostMutation(graphene.Mutation):
             try:
                 category = Category.objects.get(id=data.category)
             except Category.DoesNotExist:
-                raise GraphQLError(
-                    f'Category with id {data.category} does not exist.')
+                raise NotFoundError('게시판을 찾을 수 없습니다')
         else:
             category = None
 
@@ -45,7 +45,7 @@ class CreatePostMutation(graphene.Mutation):
                                        thumbnail=data.thumbnail,
                                        images=data.images)
         except (DatabaseError, IntegrityError) as e:
-            raise GraphQLError(f'Failed to create post: {e}')
+            raise InternalServerError()
 
         return CreatePostMutation(success=True, created_post=post)
 
@@ -66,7 +66,7 @@ class UpdatePostMutation(graphene.Mutation):
         try:
             post = Post.objects.get(id=post_id)
         except Post.DoesNotExist:
-            return UpdatePostMutation(success=False, updated_post=None)
+            raise NotFoundError('게시글을 찾을 수 없습니다')
 
         data = args.get('data')
         post.title = data.get('title', post.title)
@@ -74,8 +74,7 @@ class UpdatePostMutation(graphene.Mutation):
             try:
                 post.category = Category.objects.get(id=data.category)
             except Category.DoesNotExist:
-                raise GraphQLError(
-                    f'Category with id {data.category} does not exist.')
+                NotFoundError('게시판을 찾을 수 없습니다')
         else:
             post.category = None
         post.content = data.get('content', post.content)
@@ -86,14 +85,14 @@ class UpdatePostMutation(graphene.Mutation):
         try:
             post.save()
         except (DatabaseError, IntegrityError) as e:
-            return UpdatePostMutation(success=False, updated_post=None)
+            raise InternalServerError()
 
         return UpdatePostMutation(success=True, updated_post=post)
 
 
 class DeletePostMutation(graphene.Mutation):
     class Arguments:
-        id = graphene.Int(required=True)
+        id = graphene.ID(required=True)
 
     success = graphene.Boolean()
 
@@ -108,9 +107,9 @@ class DeletePostMutation(graphene.Mutation):
             post.save()
             return DeletePostMutation(success=True)
         except Post.DoesNotExist:
-            raise GraphQLError(f'Post with id {post_id} does not exist.')
+            raise NotFoundError('게시글을 찾을 수 없습니다')
         except DatabaseError:
-            raise GraphQLError(f'Failed to delete post with id {post_id}')
+            raise InternalServerError()
 
 
 class Mutation(graphene.ObjectType):

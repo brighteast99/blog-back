@@ -1,6 +1,7 @@
 import graphene
 from django.db import DatabaseError, IntegrityError
 from graphql import GraphQLError
+from blog.core.errors import InternalServerError, NotFoundError
 from blog.utils.decorators import login_required
 
 from blog.core.models import Template
@@ -32,7 +33,7 @@ class CreateTemplateMutation(graphene.Mutation):
                                                thumbnail=data.thumbnail,
                                                images=data.images)
         except (DatabaseError, IntegrityError) as e:
-            raise GraphQLError(f'Failed to create template: {e}')
+            raise InternalServerError()
 
         return CreateTemplateMutation(success=True, created_template=template)
 
@@ -53,7 +54,7 @@ class UpdateTemplateMutation(graphene.Mutation):
         try:
             template = Template.objects.get(id=template_id)
         except Template.DoesNotExist:
-            return UpdateTemplateMutation(success=False, updated_template=None)
+            raise NotFoundError('템플릿을 찾을 수 없습니다')
 
         data = args.get('data')
         template.name = data.get('name', template.name)
@@ -64,7 +65,7 @@ class UpdateTemplateMutation(graphene.Mutation):
         try:
             template.save()
         except (DatabaseError, IntegrityError) as e:
-            return UpdateTemplateMutation(success=False, updated_template=None)
+            raise InternalServerError()
 
         return UpdateTemplateMutation(success=True, updated_template=template)
 
@@ -85,11 +86,9 @@ class DeleteTemplateMutation(graphene.Mutation):
             template.delete()
             return DeleteTemplateMutation(success=True)
         except Template.DoesNotExist:
-            raise GraphQLError(
-                f'Tempalte with id {template_id} does not exist.')
+            raise NotFoundError('템플릿을 찾을 수 없습니다')
         except DatabaseError:
-            raise GraphQLError(
-                f'Failed to delete template with id {template_id}')
+            raise InternalServerError()
 
 
 class Mutation(graphene.ObjectType):
