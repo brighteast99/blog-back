@@ -24,4 +24,4 @@ class DraftType(DjangoObjectType):
 
     @staticmethod
     def resolve_summary(self, info):
-        return f'[{self.category.name if self.category is not None else "분류 미지정"}] {self.title} ({self.created_at})'
+        return f'[{self.category.name if self.category is not None else "분류 미지정"}] {self.title}'
