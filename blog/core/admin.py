@@ -21,7 +21,7 @@ admin.site.register(Category, CategoryAdmin)
 
 class PostAdmin(admin.ModelAdmin):
     list_display = ('id', 'category', 'title', 'created_at',
-                    'updated_at', 'is_hidden', 'is_deleted', )
+                    'updated_at', 'is_hidden', 'is_deleted', 'deleted_at')
 
 
 admin.site.register(Post, PostAdmin)
@@ -31,7 +31,7 @@ class TemplateAdmin(admin.ModelAdmin):
     def preview(self, instance):
         return format_html(f'<div style="max-height: 300px; overflow-y: auto">{instance.content}</div>')
 
-    list_display = ('id', 'name', 'preview')
+    list_display = ('id', 'title', 'preview')
 
 
 admin.site.register(Template, TemplateAdmin)
