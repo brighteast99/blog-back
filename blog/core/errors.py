@@ -14,6 +14,6 @@ class NotFoundError(GraphQLError):
 
 
 class PermissionDeniedError(GraphQLError):
-    def __init__(self, message='You do not have permission to perform this action'):
+    def __init__(self, message='권한이 없습니다'):
         super().__init__(message, extensions={
             "type": self.__class__.__name__, "errorCode": 403})

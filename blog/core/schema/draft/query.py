@@ -16,7 +16,7 @@ class Query(graphene.ObjectType):
         try:
             draft = Draft.objects.get(id=args.get('id'))
         except Draft.DoesNotExist:
-            raise NotFoundError()
+            raise NotFoundError('임시 저장본을 찾을 수 없습니다')
 
         return draft
 

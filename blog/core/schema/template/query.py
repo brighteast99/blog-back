@@ -16,7 +16,7 @@ class Query(graphene.ObjectType):
         try:
             template = Template.objects.get(id=args.get('id'))
         except Template.DoesNotExist:
-            raise NotFoundError()
+            raise NotFoundError('템플릿을 찾을 수 없습니다')
 
         return template
 

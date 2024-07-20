@@ -28,10 +28,10 @@ class Query(graphene.ObjectType):
         try:
             category = Category.objects.get(id=id, is_deleted=False)
         except Category.DoesNotExist:
-            raise NotFoundError()
+            raise NotFoundError('게시판을 찾을 수 없습니다')
 
         if not info.context.user.is_authenticated and category.is_hidden:
-            raise PermissionDeniedError()
+            raise PermissionDeniedError('접근할 수 없는 게시판입니다')
 
         return category
 
@@ -96,6 +96,6 @@ class Query(graphene.ObjectType):
         try:
             result = Category.objects.get(id=id)
         except Category.DoesNotExist:
-            raise NotFoundError()
+            raise NotFoundError('게시판을 찾을 수 없습니다')
 
         return Category.objects.exclude(Q(id__in=result.get_descendants(include_self=True)) | Q(is_deleted=True))

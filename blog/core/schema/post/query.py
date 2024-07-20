@@ -18,9 +18,9 @@ class Query(graphene.ObjectType):
         try:
             post = Post.objects.get(id=id)
         except Post.DoesNotExist:
-            raise NotFoundError()
+            raise NotFoundError('게시글을 찾을 수 없습니다.')
 
         if not info.context.user.is_authenticated and \
                 (post.is_hidden or (post.category is not None and post.category.is_hidden)):
-            raise PermissionDeniedError()
+            raise PermissionDeniedError('접근할 수 없는 게시글입니다')
         return post

@@ -44,7 +44,7 @@ class PostFilter(FilterSet):
             return Category.objects.none()
 
         if not self.user.is_authenticated and category.is_hidden:
-            raise PermissionDeniedError()
+            raise PermissionDeniedError('접근할 수 없는 게시판입니다')
 
         subcategories = category.get_descendants(include_self=True)
         return queryset.filter(category__in=subcategories)

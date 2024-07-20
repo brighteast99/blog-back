@@ -1,6 +1,5 @@
 import graphene
 from graphene_django import DjangoObjectType
-from blog.core.errors import PermissionDeniedError
 
 from blog.core.models import Category, Draft
 from blog.core.schema.category.type import CategoryType
@@ -17,9 +16,6 @@ class DraftType(DjangoObjectType):
 
     @staticmethod
     def resolve_id(self, info):
-        authenticated = info.context.user.is_authenticated
-        if self.is_hidden and not authenticated:
-            raise PermissionDeniedError()
         return self.id
 
     @staticmethod
