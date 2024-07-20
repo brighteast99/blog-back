@@ -3,6 +3,7 @@ from django.db import DatabaseError, IntegrityError
 from graphql import GraphQLError
 from blog.core.errors import InternalServerError, NotFoundError
 from blog.utils.decorators import login_required
+from blog.utils.convertid import localid
 
 from blog.core.models import Category, Post
 from . import PostType
@@ -61,7 +62,7 @@ class UpdatePostMutation(graphene.Mutation):
     @staticmethod
     @login_required
     def mutate(root, info, **args):
-        post_id = args.get('id')
+        post_id = localid(args.get('id'))
 
         try:
             post = Post.objects.get(id=post_id)
@@ -99,7 +100,7 @@ class DeletePostMutation(graphene.Mutation):
     @staticmethod
     @login_required
     def mutate(self, info, **args):
-        post_id = args.get('id')
+        post_id = localid(args.get('id'))
 
         try:
             post = Post.objects.get(id=post_id)
