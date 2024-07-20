@@ -9,15 +9,23 @@ from . import CategoryType
 
 
 class Query(graphene.ObjectType):
-    category = graphene.Field(CategoryType, id=graphene.Int())
+    category = graphene.Field(CategoryType,
+                              id=graphene.Int(),
+                              is_deleted=graphene.Boolean())
     categories = graphene.List(CategoryType)
     category_hierarchy = graphene.JSONString()
     valid_supercategories = graphene.List(
         CategoryType, id=graphene.Int(required=True))
 
     @staticmethod
-    def resolve_category(root, info, **args):
-        id = args.get('id')
+    def resolve_category(root, info, **kwargs):
+        id = kwargs.get('id')
+        is_deleted = kwargs.get('is_deleted', False)
+
+        authenticated = info.context.user.is_authenticated
+
+        if is_deleted and not authenticated:
+            raise PermissionDeniedError()
 
         if id is None:
             return Category()
@@ -26,11 +34,11 @@ class Query(graphene.ObjectType):
             return Category(id=0)
 
         try:
-            category = Category.objects.get(id=id, is_deleted=False)
+            category = Category.objects.get(id=id, is_deleted=is_deleted)
         except Category.DoesNotExist:
             raise NotFoundError('게시판을 찾을 수 없습니다')
 
-        if not info.context.user.is_authenticated and category.is_hidden:
+        if category.is_hidden and not authenticated:
             raise PermissionDeniedError('접근할 수 없는 게시판입니다')
 
         return category
