@@ -52,7 +52,7 @@ class CreatePostMutation(graphene.Mutation):
 
 class UpdatePostMutation(graphene.Mutation):
     class Arguments:
-        id = graphene.Int(required=True)
+        id = graphene.ID(required=True)
         data = PostInput(required=True)
 
     success = graphene.Boolean()
