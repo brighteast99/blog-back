@@ -9,7 +9,7 @@ from . import TemplateType
 
 
 class TemplateInput(graphene.InputObjectType):
-    name = graphene.String(required=True)
+    title = graphene.String(required=True)
     content = graphene.String(required=True)
     thumbnail = graphene.String(required=False)
     images = graphene.List(graphene.String, required=True, default=list)
@@ -28,7 +28,7 @@ class CreateTemplateMutation(graphene.Mutation):
         data = args.get('data')
 
         try:
-            template = Template.objects.create(name=data.name,
+            template = Template.objects.create(title=data.title,
                                                content=data.content,
                                                thumbnail=data.thumbnail,
                                                images=data.images)
@@ -57,7 +57,7 @@ class UpdateTemplateMutation(graphene.Mutation):
             raise NotFoundError('템플릿을 찾을 수 없습니다')
 
         data = args.get('data')
-        template.name = data.get('name', template.name)
+        template.title = data.get('title', template.title)
         template.content = data.get('content', template.content)
         template.thumbnail = data.get('thumbnail')
         template.images = data.get('images', template.images)
