@@ -1,7 +1,7 @@
 import graphene
 
-from .mutation import Mutation
-from .query import Query
-from .type import TemplateType
+from .type import TemplateType  # isort:skip
+from .mutation import Mutation  # isort:skip
+from .query import Query  # isort:skip
 
 schema = graphene.Schema(query=Query, mutation=Mutation)
