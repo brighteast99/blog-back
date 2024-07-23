@@ -6,22 +6,22 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('core', '0019_post_text_content'),
+        ("core", "0019_post_text_content"),
     ]
 
     operations = [
         migrations.AlterModelOptions(
-            name='template',
-            options={'ordering': ['title']},
+            name="template",
+            options={"ordering": ["title"]},
         ),
         migrations.RenameField(
-            model_name='template',
-            old_name='name',
-            new_name='title',
+            model_name="template",
+            old_name="name",
+            new_name="title",
         ),
         migrations.AddField(
-            model_name='post',
-            name='deleted_at',
+            model_name="post",
+            name="deleted_at",
             field=models.DateTimeField(null=True),
         ),
     ]

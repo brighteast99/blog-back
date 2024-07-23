@@ -1,8 +1,7 @@
-from .type import TemplateType
-from .query import Query
-from .mutation import Mutation
-
 import graphene
 
+from .mutation import Mutation
+from .query import Query
+from .type import TemplateType
 
 schema = graphene.Schema(query=Query, mutation=Mutation)

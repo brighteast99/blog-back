@@ -1,12 +1,13 @@
 import graphene
-from django.db.transaction import atomic
 from django.core.files.base import ContentFile
-from graphene_file_upload.scalars import Upload
-from blog.utils.decorators import login_required
 from django.db import DatabaseError, IntegrityError
-from blog.core.errors import InternalServerError, NotFoundError
+from django.db.transaction import atomic
+from graphene_file_upload.scalars import Upload
 
+from blog.core.errors import InternalServerError, NotFoundError
 from blog.core.models import Category
+from blog.utils.decorators import login_required
+
 from . import CategoryType
 
 
@@ -28,23 +29,25 @@ class CreateCategoryMutation(graphene.Mutation):
     @staticmethod
     @login_required
     def mutate(root, info, **args):
-        data = args.get('data')
+        data = args.get("data")
 
-        if 'subcategory_of' in data:
+        if "subcategory_of" in data:
             try:
                 supercategory = Category.objects.get(id=data.subcategory_of)
             except Category.DoesNotExist:
-                raise NotFoundError('게시판을 찾을 수 없습니다')
+                raise NotFoundError("게시판을 찾을 수 없습니다")
         else:
             supercategory = None
 
         try:
-            category = Category.objects.create(name=data.name,
-                                               description=data.description,
-                                               is_hidden=data.is_hidden,
-                                               cover_image=data.cover_image,
-                                               subcategory_of=supercategory)
-        except (DatabaseError, IntegrityError) as e:
+            category = Category.objects.create(
+                name=data.name,
+                description=data.description,
+                is_hidden=data.is_hidden,
+                cover_image=data.cover_image,
+                subcategory_of=supercategory,
+            )
+        except (DatabaseError, IntegrityError):
             raise InternalServerError()
 
         return CreateCategoryMutation(success=True, created_category=category)
@@ -62,41 +65,39 @@ class UpdateCategoryMutation(graphene.Mutation):
     @login_required
     @atomic
     def mutate(root, info, **args):
-        category_id = args.get('id')
+        category_id = args.get("id")
 
         try:
             category = Category.objects.get(id=category_id)
         except Category.DoesNotExist:
-            raise NotFoundError('게시판을 찾을 수 없습니다')
+            raise NotFoundError("게시판을 찾을 수 없습니다")
 
-        data = args.get('data')
-        category.name = data.get('name')
-        if 'subcategory_of' in data:
+        data = args.get("data")
+        category.name = data.get("name")
+        if "subcategory_of" in data:
             try:
-                category.subcategory_of = Category.objects.get(
-                    id=data.subcategory_of)
+                category.subcategory_of = Category.objects.get(id=data.subcategory_of)
             except Category.DoesNotExist:
-                raise NotFoundError('게시판을 찾을 수 없습니다')
+                raise NotFoundError("게시판을 찾을 수 없습니다")
         else:
             category.subcategory_of = None
-        category.description = data.get('description')
-        is_hidden = data.get('is_hidden')
+        category.description = data.get("description")
+        is_hidden = data.get("is_hidden")
         if is_hidden and not category.is_hidden:
             category.get_descendants().update(is_hidden=True)
         category.is_hidden = is_hidden
 
-        if 'cover_image' in data:
-            cover_image = data.get('cover_image')
+        if "cover_image" in data:
+            cover_image = data.get("cover_image")
             if cover_image is None:
                 category.cover_image.delete()
             else:
                 content_file = ContentFile(cover_image.read())
-                category.cover_image.save(
-                    cover_image.name, content_file, save=True)
+                category.cover_image.save(cover_image.name, content_file, save=True)
 
         try:
             category.save()
-        except (DatabaseError, IntegrityError) as e:
+        except (DatabaseError, IntegrityError):
             raise InternalServerError()
 
         return UpdateCategoryMutation(success=True, updated_category=category)
@@ -112,7 +113,7 @@ class DeleteCategoryMutation(graphene.Mutation):
     @atomic
     @login_required
     def mutate(self, info, **args):
-        category_id = args.get('id')
+        category_id = args.get("id")
 
         try:
             category = Category.objects.get(id=category_id)
@@ -121,7 +122,7 @@ class DeleteCategoryMutation(graphene.Mutation):
             category.save()
             return DeleteCategoryMutation(success=True)
         except Category.DoesNotExist:
-            raise NotFoundError('게시판을 찾을 수 없습니다')
+            raise NotFoundError("게시판을 찾을 수 없습니다")
         except DatabaseError:
             raise InternalServerError()
 

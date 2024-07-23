@@ -1,10 +1,10 @@
 import graphene
 from django.db import DatabaseError, IntegrityError
-from graphql import GraphQLError
+
 from blog.core.errors import InternalServerError, NotFoundError
+from blog.core.models import Template
 from blog.utils.decorators import login_required
 
-from blog.core.models import Template
 from . import TemplateType
 
 
@@ -25,14 +25,16 @@ class CreateTemplateMutation(graphene.Mutation):
     @staticmethod
     @login_required
     def mutate(root, info, **args):
-        data = args.get('data')
+        data = args.get("data")
 
         try:
-            template = Template.objects.create(title=data.title,
-                                               content=data.content,
-                                               thumbnail=data.thumbnail,
-                                               images=data.images)
-        except (DatabaseError, IntegrityError) as e:
+            template = Template.objects.create(
+                title=data.title,
+                content=data.content,
+                thumbnail=data.thumbnail,
+                images=data.images,
+            )
+        except (DatabaseError, IntegrityError):
             raise InternalServerError()
 
         return CreateTemplateMutation(success=True, created_template=template)
@@ -49,22 +51,22 @@ class UpdateTemplateMutation(graphene.Mutation):
     @staticmethod
     @login_required
     def mutate(root, info, **args):
-        template_id = args.get('id')
+        template_id = args.get("id")
 
         try:
             template = Template.objects.get(id=template_id)
         except Template.DoesNotExist:
-            raise NotFoundError('템플릿을 찾을 수 없습니다')
+            raise NotFoundError("템플릿을 찾을 수 없습니다")
 
-        data = args.get('data')
-        template.title = data.get('title', template.title)
-        template.content = data.get('content', template.content)
-        template.thumbnail = data.get('thumbnail')
-        template.images = data.get('images', template.images)
+        data = args.get("data")
+        template.title = data.get("title", template.title)
+        template.content = data.get("content", template.content)
+        template.thumbnail = data.get("thumbnail")
+        template.images = data.get("images", template.images)
 
         try:
             template.save()
-        except (DatabaseError, IntegrityError) as e:
+        except (DatabaseError, IntegrityError):
             raise InternalServerError()
 
         return UpdateTemplateMutation(success=True, updated_template=template)
@@ -79,14 +81,14 @@ class DeleteTemplateMutation(graphene.Mutation):
     @staticmethod
     @login_required
     def mutate(self, info, **args):
-        template_id = args.get('id')
+        template_id = args.get("id")
 
         try:
             template = Template.objects.get(id=template_id)
             template.delete()
             return DeleteTemplateMutation(success=True)
         except Template.DoesNotExist:
-            raise NotFoundError('템플릿을 찾을 수 없습니다')
+            raise NotFoundError("템플릿을 찾을 수 없습니다")
         except DatabaseError:
             raise InternalServerError()
 

@@ -1,8 +1,9 @@
 import graphene
-from blog.utils.decorators import login_required
-from blog.core.errors import NotFoundError
 
+from blog.core.errors import NotFoundError
 from blog.core.models import Draft
+from blog.utils.decorators import login_required
+
 from . import DraftType
 
 
@@ -14,9 +15,9 @@ class Query(graphene.ObjectType):
     @login_required
     def resolve_draft(root, info, **args):
         try:
-            draft = Draft.objects.get(id=args.get('id'))
+            draft = Draft.objects.get(id=args.get("id"))
         except Draft.DoesNotExist:
-            raise NotFoundError('임시 저장본을 찾을 수 없습니다')
+            raise NotFoundError("임시 저장본을 찾을 수 없습니다")
 
         return draft
 

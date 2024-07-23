@@ -6,13 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('core', '0011_category_cover_image'),
+        ("core", "0011_category_cover_image"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='category',
-            name='is_deleted',
+            model_name="category",
+            name="is_deleted",
             field=models.BooleanField(default=False),
         ),
     ]

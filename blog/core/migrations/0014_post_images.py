@@ -7,13 +7,15 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('core', '0013_alter_category_cover_image'),
+        ("core", "0013_alter_category_cover_image"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='post',
-            name='images',
-            field=django.contrib.postgres.fields.ArrayField(base_field=models.URLField(), default=list, size=None),
+            model_name="post",
+            name="images",
+            field=django.contrib.postgres.fields.ArrayField(
+                base_field=models.URLField(), default=list, size=None
+            ),
         ),
     ]

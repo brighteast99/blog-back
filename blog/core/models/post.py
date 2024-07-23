@@ -16,10 +16,10 @@ class AbstractTemplate(models.Model):
 
 class Template(AbstractTemplate):
     class Meta:
-        ordering = ['title']
+        ordering = ["title"]
 
     def __str__(self):
-        return f'{self.title}'
+        return f"{self.title}"
 
 
 class AbstractDraft(AbstractTemplate):
@@ -32,11 +32,15 @@ class AbstractDraft(AbstractTemplate):
 
 class Draft(AbstractDraft):
     category = models.ForeignKey(
-        Category, related_name='drafts', on_delete=models.SET_NULL, null=True, blank=True
+        Category,
+        related_name="drafts",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
     )
 
     class Meta:
-        ordering = ['-created_at']
+        ordering = ["-created_at"]
 
     def __str__(self):
         return f'[{self.category.name if self.category is not None else "분류 미지정"}] {self.title} (임시 저장본)'
@@ -44,7 +48,7 @@ class Draft(AbstractDraft):
 
 class Post(AbstractDraft):
     category = models.ForeignKey(
-        Category, related_name='posts', on_delete=models.SET_NULL, null=True, blank=True
+        Category, related_name="posts", on_delete=models.SET_NULL, null=True, blank=True
     )
     text_content = models.TextField(blank=True, null=True)
     is_deleted = models.BooleanField(default=False)
@@ -52,7 +56,7 @@ class Post(AbstractDraft):
     deleted_at = models.DateTimeField(null=True)
 
     class Meta:
-        ordering = ['-created_at']
+        ordering = ["-created_at"]
 
     def __str__(self):
         return f'[{self.category.name if self.category is not None else "분류 미지정"}] {self.title}'

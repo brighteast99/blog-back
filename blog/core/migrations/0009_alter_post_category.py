@@ -7,14 +7,19 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('core', '0008_category_level_category_lft_category_rght_and_more'),
+        ("core", "0008_category_level_category_lft_category_rght_and_more"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='post',
-            name='category',
+            model_name="post",
+            name="category",
             field=models.ForeignKey(
-                blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='posts', to='core.category'),
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name="posts",
+                to="core.category",
+            ),
         ),
     ]

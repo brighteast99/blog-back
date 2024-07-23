@@ -6,17 +6,16 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('core', '0005_post_is_deleted'),
+        ("core", "0005_post_is_deleted"),
     ]
 
     operations = [
         migrations.AlterModelOptions(
-            name='category',
-            options={'ordering': ['name'],
-                     'verbose_name_plural': 'Categories'},
+            name="category",
+            options={"ordering": ["name"], "verbose_name_plural": "Categories"},
         ),
         migrations.AlterModelOptions(
-            name='post',
-            options={'ordering': ['-updated_at', '-created_at']},
+            name="post",
+            options={"ordering": ["-updated_at", "-created_at"]},
         ),
     ]

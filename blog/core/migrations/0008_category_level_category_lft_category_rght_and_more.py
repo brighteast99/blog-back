@@ -8,44 +8,48 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('core', '0007_category_description'),
+        ("core", "0007_category_description"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='category',
-            name='level',
+            model_name="category",
+            name="level",
             field=models.PositiveIntegerField(default=0, editable=False),
             preserve_default=False,
         ),
         migrations.AddField(
-            model_name='category',
-            name='lft',
+            model_name="category",
+            name="lft",
             field=models.PositiveIntegerField(default=0, editable=False),
             preserve_default=False,
         ),
         migrations.AddField(
-            model_name='category',
-            name='rght',
+            model_name="category",
+            name="rght",
             field=models.PositiveIntegerField(default=0, editable=False),
             preserve_default=False,
         ),
         migrations.AddField(
-            model_name='category',
-            name='tree_id',
-            field=models.PositiveIntegerField(
-                db_index=True, default=0, editable=False),
+            model_name="category",
+            name="tree_id",
+            field=models.PositiveIntegerField(db_index=True, default=0, editable=False),
             preserve_default=False,
         ),
         migrations.AddField(
-            model_name='post',
-            name='thumbnail',
+            model_name="post",
+            name="thumbnail",
             field=models.URLField(blank=True, null=True),
         ),
         migrations.AlterField(
-            model_name='category',
-            name='subcategory_of',
+            model_name="category",
+            name="subcategory_of",
             field=mptt.fields.TreeForeignKey(
-                blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='subcategories', to='core.category'),
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="subcategories",
+                to="core.category",
+            ),
         ),
     ]

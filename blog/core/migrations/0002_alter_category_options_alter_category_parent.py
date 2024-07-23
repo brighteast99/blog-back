@@ -7,18 +7,23 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('core', '0001_initial'),
+        ("core", "0001_initial"),
     ]
 
     operations = [
         migrations.AlterModelOptions(
-            name='category',
-            options={'ordering': ['id'], 'verbose_name_plural': 'Categories'},
+            name="category",
+            options={"ordering": ["id"], "verbose_name_plural": "Categories"},
         ),
         migrations.AlterField(
-            model_name='category',
-            name='parent',
+            model_name="category",
+            name="parent",
             field=models.ForeignKey(
-                blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='subc', to='core.category'),
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="subc",
+                to="core.category",
+            ),
         ),
     ]

@@ -7,21 +7,34 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('core', '0015_alter_post_options'),
+        ("core", "0015_alter_post_options"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='Draft',
+            name="Draft",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(max_length=100)),
-                ('content', models.TextField(blank=True, null=True)),
-                ('thumbnail', models.URLField(blank=True, null=True)),
-                ('images', django.contrib.postgres.fields.ArrayField(base_field=models.URLField(), default=list, size=None)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("name", models.CharField(max_length=100)),
+                ("content", models.TextField(blank=True, null=True)),
+                ("thumbnail", models.URLField(blank=True, null=True)),
+                (
+                    "images",
+                    django.contrib.postgres.fields.ArrayField(
+                        base_field=models.URLField(), default=list, size=None
+                    ),
+                ),
             ],
             options={
-                'ordering': ['name'],
+                "ordering": ["name"],
             },
         ),
     ]

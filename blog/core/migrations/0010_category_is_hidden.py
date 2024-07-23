@@ -6,13 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('core', '0009_alter_post_category'),
+        ("core", "0009_alter_post_category"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='category',
-            name='is_hidden',
+            model_name="category",
+            name="is_hidden",
             field=models.BooleanField(default=False),
         ),
     ]

@@ -1,2 +1,2 @@
 from .category import Category
-from .post import Post, Template, Draft
+from .post import Draft, Post, Template

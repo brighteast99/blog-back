@@ -9,7 +9,7 @@ class TemplateType(DjangoObjectType):
 
     class Meta:
         model = Template
-        fields = '__all__'
+        fields = "__all__"
 
     @staticmethod
     def resolve_id(self, info):

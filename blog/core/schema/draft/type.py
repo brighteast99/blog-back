@@ -12,7 +12,7 @@ class DraftType(DjangoObjectType):
 
     class Meta:
         model = Draft
-        fields = '__all__'
+        fields = "__all__"
 
     @staticmethod
     def resolve_id(self, info):

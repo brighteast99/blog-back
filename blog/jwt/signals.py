@@ -1,5 +1,4 @@
 from django.dispatch import receiver
-
 from graphql_jwt.refresh_token.signals import refresh_token_rotated
 
 

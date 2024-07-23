@@ -3,9 +3,10 @@ from django.core.files.base import ContentFile
 from django.db import DatabaseError, IntegrityError
 from graphene_django import DjangoObjectType
 from graphene_file_upload.scalars import Upload
+
 from blog.core.errors import InternalServerError
-from blog.utils.decorators import login_required
 from blog.info.models import Info
+from blog.utils.decorators import login_required
 
 
 class InfoType(DjangoObjectType):
@@ -13,7 +14,7 @@ class InfoType(DjangoObjectType):
 
     class Meta:
         model = Info
-        fields = '__all__'
+        fields = "__all__"
 
     @staticmethod
     def resolve_avatar(self, info):
@@ -47,13 +48,13 @@ class UpdateInfoMutation(graphene.Mutation):
         try:
             info = Info.objects.first()
         except Info.DoesNotExist:
-            info = Info(title='', description='', avatar=None)
+            info = Info(title="", description="", avatar=None)
 
-        data = args.get('data')
-        info.title = data.get('title', info.title)
-        info.description = data.get('description', info.description)
-        if 'avatar' in data:
-            avatar_image = data.get('avatar')
+        data = args.get("data")
+        info.title = data.get("title", info.title)
+        info.description = data.get("description", info.description)
+        if "avatar" in data:
+            avatar_image = data.get("avatar")
             if avatar_image is None:
                 info.avatar.delete()
             else:

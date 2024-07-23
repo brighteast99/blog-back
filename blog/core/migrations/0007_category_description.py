@@ -6,13 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('core', '0006_alter_category_options_alter_post_options'),
+        ("core", "0006_alter_category_options_alter_post_options"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='category',
-            name='description',
+            model_name="category",
+            name="description",
             field=models.TextField(blank=True),
         ),
     ]

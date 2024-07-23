@@ -1,8 +1,8 @@
 import graphene
 from django.db.models import Q
 from graphene_django import DjangoObjectType
-from blog.core.errors import PermissionDeniedError
 
+from blog.core.errors import PermissionDeniedError
 from blog.core.models import Category, Post
 
 
@@ -10,15 +10,14 @@ class CategoryType(DjangoObjectType):
     id = graphene.Int()
     name = graphene.String()
     level = graphene.Int()
-    post_count = graphene.Int(
-        exclude_subcategories=graphene.Boolean(False))
+    post_count = graphene.Int(exclude_subcategories=graphene.Boolean(False))
     subcategories = graphene.List(lambda: CategoryType)
     ancestors = graphene.List(lambda: CategoryType)
     cover_image = graphene.String()
 
     class Meta:
         model = Category
-        fields = '__all__'
+        fields = "__all__"
 
     @staticmethod
     def resolve_name(self, info):
@@ -63,12 +62,10 @@ class CategoryType(DjangoObjectType):
 
     @staticmethod
     def resolve_post_count(self, info, exclude_subcategories=False):
-        posts = Post.objects.exclude(
-            Q(is_deleted=True) | Q(category__is_deleted=True))
+        posts = Post.objects.exclude(Q(is_deleted=True) | Q(category__is_deleted=True))
 
         if not info.context.user.is_authenticated:
-            posts = posts.exclude(Q(is_hidden=True) |
-                                  Q(category__is_hidden=True))
+            posts = posts.exclude(Q(is_hidden=True) | Q(category__is_hidden=True))
 
         if self.id is None:
             pass
@@ -78,8 +75,10 @@ class CategoryType(DjangoObjectType):
             if exclude_subcategories:
                 posts = self.posts
             else:
-                posts = Post.objects.filter(category__in=Category.get_descendants(self, include_self=True),
-                                            category__is_deleted=False)
+                posts = Post.objects.filter(
+                    category__in=Category.get_descendants(self, include_self=True),
+                    category__is_deleted=False,
+                )
 
         return posts.count()
 

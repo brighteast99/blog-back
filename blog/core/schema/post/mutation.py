@@ -1,11 +1,11 @@
 import graphene
 from django.db import DatabaseError, IntegrityError
-from graphql import GraphQLError
-from blog.core.errors import InternalServerError, NotFoundError
-from blog.utils.decorators import login_required
-from blog.utils.convertid import localid
 
+from blog.core.errors import InternalServerError, NotFoundError
 from blog.core.models import Category, Post
+from blog.utils.convertid import localid
+from blog.utils.decorators import login_required
+
 from . import PostType
 
 
@@ -28,24 +28,26 @@ class CreatePostMutation(graphene.Mutation):
     @staticmethod
     @login_required
     def mutate(root, info, **args):
-        data = args.get('data')
+        data = args.get("data")
 
-        if 'category' in data:
+        if "category" in data:
             try:
                 category = Category.objects.get(id=data.category)
             except Category.DoesNotExist:
-                raise NotFoundError('게시판을 찾을 수 없습니다')
+                raise NotFoundError("게시판을 찾을 수 없습니다")
         else:
             category = None
 
         try:
-            post = Post.objects.create(title=data.title,
-                                       category=category,
-                                       content=data.content,
-                                       is_hidden=data.is_hidden,
-                                       thumbnail=data.thumbnail,
-                                       images=data.images)
-        except (DatabaseError, IntegrityError) as e:
+            post = Post.objects.create(
+                title=data.title,
+                category=category,
+                content=data.content,
+                is_hidden=data.is_hidden,
+                thumbnail=data.thumbnail,
+                images=data.images,
+            )
+        except (DatabaseError, IntegrityError):
             raise InternalServerError()
 
         return CreatePostMutation(success=True, created_post=post)
@@ -62,30 +64,30 @@ class UpdatePostMutation(graphene.Mutation):
     @staticmethod
     @login_required
     def mutate(root, info, **args):
-        post_id = localid(args.get('id'))
+        post_id = localid(args.get("id"))
 
         try:
             post = Post.objects.get(id=post_id)
         except Post.DoesNotExist:
-            raise NotFoundError('게시글을 찾을 수 없습니다')
+            raise NotFoundError("게시글을 찾을 수 없습니다")
 
-        data = args.get('data')
-        post.title = data.get('title', post.title)
-        if 'category' in data and data.category != 0:
+        data = args.get("data")
+        post.title = data.get("title", post.title)
+        if "category" in data and data.category != 0:
             try:
                 post.category = Category.objects.get(id=data.category)
             except Category.DoesNotExist:
-                NotFoundError('게시판을 찾을 수 없습니다')
+                NotFoundError("게시판을 찾을 수 없습니다")
         else:
             post.category = None
-        post.content = data.get('content', post.content)
-        post.is_hidden = data.get('is_hidden', post.is_hidden)
-        post.thumbnail = data.get('thumbnail')
-        post.images = data.get('images', post.images)
+        post.content = data.get("content", post.content)
+        post.is_hidden = data.get("is_hidden", post.is_hidden)
+        post.thumbnail = data.get("thumbnail")
+        post.images = data.get("images", post.images)
 
         try:
             post.save()
-        except (DatabaseError, IntegrityError) as e:
+        except (DatabaseError, IntegrityError):
             raise InternalServerError()
 
         return UpdatePostMutation(success=True, updated_post=post)
@@ -100,7 +102,7 @@ class DeletePostMutation(graphene.Mutation):
     @staticmethod
     @login_required
     def mutate(self, info, **args):
-        post_id = localid(args.get('id'))
+        post_id = localid(args.get("id"))
 
         try:
             post = Post.objects.get(id=post_id)
@@ -108,7 +110,7 @@ class DeletePostMutation(graphene.Mutation):
             post.save()
             return DeletePostMutation(success=True)
         except Post.DoesNotExist:
-            raise NotFoundError('게시글을 찾을 수 없습니다')
+            raise NotFoundError("게시글을 찾을 수 없습니다")
         except DatabaseError:
             raise InternalServerError()
 

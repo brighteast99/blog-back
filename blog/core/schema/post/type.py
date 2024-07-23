@@ -4,6 +4,7 @@ from graphene_django import DjangoObjectType
 
 from blog.core.models import Category, Post
 from blog.core.schema.category.type import CategoryType
+
 from .filter import PostFilter
 
 
@@ -13,8 +14,8 @@ class PostType(DjangoObjectType):
     class Meta:
         model = Post
         filterset_class = PostFilter
-        interfaces = (Node, )
-        fields = '__all__'
+        interfaces = (Node,)
+        fields = "__all__"
 
     @staticmethod
     def resolve_category(self, info):

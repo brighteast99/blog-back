@@ -1,13 +1,15 @@
-from graphene import Node
 from base64 import b64decode
+
+from graphene import Node
+
 from blog.core.errors import InvalidValueError
 
 
 def localid(global_id):
     try:
-        decoded = b64decode(global_id).decode('UTF-8').split(':')
+        decoded = b64decode(global_id).decode("UTF-8").split(":")
         if len(decoded) < 2:
-            raise InvalidValueError('Invalid global id')
+            raise InvalidValueError("Invalid global id")
     except:
         return None
 

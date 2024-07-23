@@ -6,13 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('core', '0004_remove_category_parent_category_subcategory_of'),
+        ("core", "0004_remove_category_parent_category_subcategory_of"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='post',
-            name='is_deleted',
+            model_name="post",
+            name="is_deleted",
             field=models.BooleanField(default=False),
         ),
     ]

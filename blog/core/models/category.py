@@ -10,17 +10,23 @@ class Category(MPTTModel):
     is_hidden = models.BooleanField(default=False)
     is_deleted = models.BooleanField(default=False)
     cover_image = models.ImageField(
-        blank=True, null=True, storage=Cafe24OBS, upload_to='category-image/')
-    subcategory_of = TreeForeignKey('self', null=True, blank=True, on_delete=models.CASCADE,
-                                    related_name='subcategories')
+        blank=True, null=True, storage=Cafe24OBS, upload_to="category-image/"
+    )
+    subcategory_of = TreeForeignKey(
+        "self",
+        null=True,
+        blank=True,
+        on_delete=models.CASCADE,
+        related_name="subcategories",
+    )
 
     class Meta:
-        verbose_name_plural = 'Categories'
-        ordering = ['name']
+        verbose_name_plural = "Categories"
+        ordering = ["name"]
 
     class MPTTMeta:
-        order_insertion_by = ['name']
-        parent_attr = 'subcategory_of'
+        order_insertion_by = ["name"]
+        parent_attr = "subcategory_of"
 
     def __str__(self):
         return self.name

@@ -1,8 +1,7 @@
-from .type import CategoryType
-from .query import Query
-from .mutation import Mutation
-
 import graphene
 
+from .mutation import Mutation
+from .query import Query
+from .type import CategoryType
 
 schema = graphene.Schema(query=Query, mutation=Mutation)

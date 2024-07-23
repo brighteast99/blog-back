@@ -1,11 +1,13 @@
 import uuid
+from urllib.parse import urlparse
+
 import graphene
 from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
 from graphene_file_upload.scalars import Upload
-from urllib.parse import urlparse
-from blog.utils.decorators import login_required
+
 from blog.core.errors import InternalServerError
+from blog.utils.decorators import login_required
 
 
 class UploadImageMutation(graphene.Mutation):
@@ -17,10 +19,11 @@ class UploadImageMutation(graphene.Mutation):
     @staticmethod
     @login_required
     def mutate(self, info, **args):
-        file = args.get('file')
-        name, ext = file.name.rsplit('.', 1)
+        file = args.get("file")
+        name, ext = file.name.rsplit(".", 1)
         path = default_storage.save(
-            f'media/{name}_{uuid.uuid4()}.{ext}', ContentFile(file.read()))
+            f"media/{name}_{uuid.uuid4()}.{ext}", ContentFile(file.read())
+        )
         return UploadImageMutation(url=default_storage.url(path))
 
 
@@ -33,7 +36,7 @@ class DeleteImageMutation(graphene.Mutation):
     @staticmethod
     @login_required
     def mutate(self, info, **args):
-        file_path = '/'.join(urlparse(args.get('url')).path.split('/', 2)[2:])
+        file_path = "/".join(urlparse(args.get("url")).path.split("/", 2)[2:])
 
         if default_storage.exists(file_path):
             default_storage.delete(file_path)

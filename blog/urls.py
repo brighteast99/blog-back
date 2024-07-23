@@ -14,16 +14,15 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+
 from django.contrib import admin
 from django.urls import path, re_path
-from django.views.generic import TemplateView
 from django.views.decorators.csrf import csrf_exempt
+from django.views.generic import TemplateView
 from graphene_file_upload.django import FileUploadGraphQLView
 
-from blog import settings
-
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('api/', csrf_exempt(FileUploadGraphQLView.as_view(graphiql=True))),
-    re_path(r'^.*$', TemplateView.as_view(template_name='index.html'))
+    path("admin/", admin.site.urls),
+    path("api/", csrf_exempt(FileUploadGraphQLView.as_view(graphiql=True))),
+    re_path(r"^.*$", TemplateView.as_view(template_name="index.html")),
 ]

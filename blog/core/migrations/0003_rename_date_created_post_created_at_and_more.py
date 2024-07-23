@@ -6,18 +6,18 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('core', '0002_alter_category_options_alter_category_parent'),
+        ("core", "0002_alter_category_options_alter_category_parent"),
     ]
 
     operations = [
         migrations.RenameField(
-            model_name='post',
-            old_name='date_created',
-            new_name='created_at',
+            model_name="post",
+            old_name="date_created",
+            new_name="created_at",
         ),
         migrations.RenameField(
-            model_name='post',
-            old_name='date_updated',
-            new_name='updated_at',
+            model_name="post",
+            old_name="date_updated",
+            new_name="updated_at",
         ),
     ]

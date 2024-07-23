@@ -1,9 +1,10 @@
 import graphene
-from blog.utils.decorators import login_required
 from django.db import DatabaseError, IntegrityError
-from blog.core.errors import InternalServerError, NotFoundError
 
+from blog.core.errors import InternalServerError, NotFoundError
 from blog.core.models import Category, Draft
+from blog.utils.decorators import login_required
+
 from . import DraftType
 
 
@@ -26,24 +27,26 @@ class CreateDraftMutation(graphene.Mutation):
     @staticmethod
     @login_required
     def mutate(root, info, **args):
-        data = args.get('data')
+        data = args.get("data")
 
-        if 'category' in data:
+        if "category" in data:
             try:
                 category = Category.objects.get(id=data.category)
             except Category.DoesNotExist:
-                NotFoundError('게시판을 찾을 수 없습니다')
+                NotFoundError("게시판을 찾을 수 없습니다")
         else:
             category = None
 
         try:
-            draft = Draft.objects.create(title=data.title,
-                                         category=category,
-                                         content=data.content,
-                                         is_hidden=data.is_hidden,
-                                         thumbnail=data.thumbnail,
-                                         images=data.images)
-        except (DatabaseError, IntegrityError) as e:
+            draft = Draft.objects.create(
+                title=data.title,
+                category=category,
+                content=data.content,
+                is_hidden=data.is_hidden,
+                thumbnail=data.thumbnail,
+                images=data.images,
+            )
+        except (DatabaseError, IntegrityError):
             raise InternalServerError()
 
         return CreateDraftMutation(success=True, created_draft=draft)
@@ -58,14 +61,14 @@ class DeleteDraftMutation(graphene.Mutation):
     @staticmethod
     @login_required
     def mutate(self, info, **args):
-        draft_id = args.get('id')
+        draft_id = args.get("id")
 
         try:
             draft = Draft.objects.get(id=draft_id)
             draft.delete()
             return DeleteDraftMutation(success=True)
         except Draft.DoesNotExist:
-            raise NotFoundError('임시 저장본을 찾을 수 없습니다')
+            raise NotFoundError("임시 저장본을 찾을 수 없습니다")
         except DatabaseError:
             raise InternalServerError()
 
