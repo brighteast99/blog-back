@@ -36,10 +36,10 @@ class PostFilter(FilterSet):
         try:
             category = Category.objects.get(id=value)
         except Category.DoesNotExist:
-            return Category.objects.none()
+            return Post.objects.none()
 
         if category.is_deleted:
-            return Category.objects.none()
+            return Post.objects.none()
 
         if not self.user.is_authenticated and category.is_hidden:
             raise PermissionDeniedError("접근할 수 없는 게시판입니다")
