@@ -4,6 +4,7 @@ from graphene_django import DjangoObjectType
 
 from blog.core.models import Category, Post
 from blog.core.schema.category.type import CategoryType
+from blog.utils.pagination import ExtendedConnection
 
 from .filter import PostFilter
 
@@ -13,8 +14,9 @@ class PostType(DjangoObjectType):
 
     class Meta:
         model = Post
-        filterset_class = PostFilter
         interfaces = (Node,)
+        connection_class = ExtendedConnection
+        filterset_class = PostFilter
         fields = "__all__"
 
     @staticmethod
