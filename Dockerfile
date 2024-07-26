@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.7-labs
 
-FROM python:3.10-slim
+FROM python:3.11-slim
 LABEL maintainer="Donghwan Kim <brighteast99@gmail.com>"
 LABEL description="Python server for Donghwan's blog"
 
