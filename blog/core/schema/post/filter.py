@@ -7,6 +7,7 @@ from blog.core.models import Category, Post
 
 class PostFilter(FilterSet):
     category_id = NumberFilter(method="filter_by_category")
+    title_and_content = CharFilter(method="search_by_keywords")
     title = CharFilter(method="search_by_keywords")
     content = CharFilter(method="search_by_keywords")
 
@@ -48,10 +49,15 @@ class PostFilter(FilterSet):
         return queryset.filter(category__in=subcategories)
 
     def search_by_keywords(self, queryset, name, value):
-        field_by_name = {"title": "title", "content": "text_content"}
+        fields_by_name = {
+            "title_and_content": ["title", "text_content"],
+            "title": ["title"],
+            "content": ["text_content"],
+        }
 
         keywords = value.split()
         query = Q()
-        for keyword in keywords:
-            query |= Q(**{f"{field_by_name[name]}__icontains": keyword})
+        for field in fields_by_name[name]:
+            for keyword in keywords:
+                query |= Q(**{f"{field}__icontains": keyword})
         return queryset.filter(query)
