@@ -13,6 +13,7 @@ class PostInput(graphene.InputObjectType):
     title = graphene.String(required=True)
     category = graphene.Int(required=False)
     content = graphene.String(required=True)
+    text_content = graphene.String(required=True)
     is_hidden = graphene.Boolean(required=True)
     thumbnail = graphene.String(required=False)
     images = graphene.List(graphene.String, required=True, default=list)
@@ -43,6 +44,7 @@ class CreatePostMutation(graphene.Mutation):
                 title=data.title,
                 category=category,
                 content=data.content,
+                text_content=data.text_content,
                 is_hidden=data.is_hidden,
                 thumbnail=data.thumbnail,
                 images=data.images,
@@ -81,6 +83,7 @@ class UpdatePostMutation(graphene.Mutation):
         else:
             post.category = None
         post.content = data.get("content", post.content)
+        post.text_content = data.get("text_content", post.text_content)
         post.is_hidden = data.get("is_hidden", post.is_hidden)
         post.thumbnail = data.get("thumbnail")
         post.images = data.get("images", post.images)

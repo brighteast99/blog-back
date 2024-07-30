@@ -12,6 +12,7 @@ class DraftInput(graphene.InputObjectType):
     title = graphene.String(required=True)
     category = graphene.Int(required=False)
     content = graphene.String(required=True)
+    text_content = graphene.String(required=True)
     is_hidden = graphene.Boolean(required=True)
     thumbnail = graphene.String(required=False)
     images = graphene.List(graphene.String, required=True, default=list)
@@ -42,6 +43,7 @@ class CreateDraftMutation(graphene.Mutation):
                 title=data.title,
                 category=category,
                 content=data.content,
+                text_content=data.text_content,
                 is_hidden=data.is_hidden,
                 thumbnail=data.thumbnail,
                 images=data.images,

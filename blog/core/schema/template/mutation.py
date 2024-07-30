@@ -11,6 +11,7 @@ from . import TemplateType
 class TemplateInput(graphene.InputObjectType):
     title = graphene.String(required=True)
     content = graphene.String(required=True)
+    text_content = graphene.String(required=True)
     thumbnail = graphene.String(required=False)
     images = graphene.List(graphene.String, required=True, default=list)
 
@@ -31,6 +32,7 @@ class CreateTemplateMutation(graphene.Mutation):
             template = Template.objects.create(
                 title=data.title,
                 content=data.content,
+                text_content=data.text_content,
                 thumbnail=data.thumbnail,
                 images=data.images,
             )
@@ -61,6 +63,7 @@ class UpdateTemplateMutation(graphene.Mutation):
         data = args.get("data")
         template.title = data.get("title", template.title)
         template.content = data.get("content", template.content)
+        template.text_content = data.get("text_content", template.text_content)
         template.thumbnail = data.get("thumbnail")
         template.images = data.get("images", template.images)
 

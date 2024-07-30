@@ -7,6 +7,7 @@ from . import Category
 class AbstractTemplate(models.Model):
     title = models.CharField(max_length=100, null=False, blank=False)
     content = models.TextField(blank=True, null=True)
+    text_content = models.TextField(blank=True, null=True)
     thumbnail = models.URLField(blank=True, null=True)
     images = ArrayField(models.URLField(), default=list)
 
