@@ -16,8 +16,10 @@ class PostFilter(FilterSet):
         fields = ["category_id", "title", "content"]
 
     def __init__(self, *args, **kwargs):
-        request = kwargs.pop("request")
-        self.user = request.user
+        user = kwargs.pop("user", None)
+        if user is None:
+            user = kwargs.pop("request").user
+        self.user = user
         super().__init__(*args, **kwargs)
 
     @property
