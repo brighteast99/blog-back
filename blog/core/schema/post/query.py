@@ -53,7 +53,7 @@ class Query(graphene.ObjectType):
             data=kwargs, queryset=Post.objects.all(), user=info.context.user
         ).qs
 
-        page_size = kwargs.pop("page_size", None)
+        page_size = kwargs.pop("page_size", queryset.__len__())
         target_post = kwargs.pop("target_post", None)
 
         if target_post:
@@ -67,8 +67,8 @@ class Query(graphene.ObjectType):
         else:
             offset = kwargs.pop("offset", 0)
 
-        pages = math.ceil(queryset.__len__() / page_size) if page_size > 0 else 1
-        current_page = offset // page_size if page_size > 0 else 0
+        pages = math.ceil(queryset.__len__() / page_size)
+        current_page = offset // page_size
         queryset = list(queryset)[offset : offset + page_size]
         return PaginatedPostType(
             posts=queryset,
