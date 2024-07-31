@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.7-labs
 
-FROM python:3.11-slim
+FROM python:3.11-alpine
 LABEL maintainer="Donghwan Kim <brighteast99@gmail.com>"
 LABEL description="Python server for Donghwan's blog"
 
@@ -15,4 +15,4 @@ ENV DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY}
 RUN python3 manage.py collectstatic --noinput
 
 EXPOSE 8000
-CMD ["python3", "manage.py", "runserver", "0.0.0.0:8000"]
+CMD ["gunicorn", "blog.wsgi:application", "--config", "gunicorn.conf.py"]
