@@ -24,6 +24,8 @@ DEBUG = os.getenv("DJANGO_DEBUG", "false").lower() == "true"
 
 ALLOWED_HOSTS = ["localhost", os.getenv("PROXY_HOST")]
 
+ADMIN_HOSTS = os.getenv("ADMIN_HOSTS", "").split()
+
 CORS_ALLOW_CREDENTIALS = True
 CORS_ORIGIN_WHITELIST = ["http://localhost:3000", os.getenv("PROXY_ORIGIN")]
 CORS_ALLOW_METHODS = (
@@ -73,6 +75,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
+    "blog.utils.middlewares.AdminAccessControlMiddleware",
 ]
 
 ROOT_URLCONF = "blog.urls"
