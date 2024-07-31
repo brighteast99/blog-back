@@ -11,6 +11,8 @@ from .filter import PostFilter
 
 class PostType(DjangoObjectType):
     category = graphene.Field(CategoryType)
+    title_highlights = graphene.List(graphene.List(graphene.Int))
+    content_highlights = graphene.List(graphene.List(graphene.Int))
 
     class Meta:
         model = Post

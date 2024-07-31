@@ -57,7 +57,7 @@ class PostFilter(FilterSet):
             "content": ["text_content"],
         }
 
-        keywords = value.split()
+        keywords = set(value.split())
         query = Q()
         for field in fields_by_name[name]:
             for keyword in keywords:
