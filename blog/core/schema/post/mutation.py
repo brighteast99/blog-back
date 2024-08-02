@@ -31,7 +31,6 @@ class CreatePostMutation(graphene.Mutation):
     def mutate(root, info, **args):
         data = args.get("data")
 
-        print(data.category, type(data.category))
         if data.category > 0:
             try:
                 category = Category.objects.get(id=data.category, is_deleted=False)
