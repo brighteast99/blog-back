@@ -11,7 +11,7 @@ from . import PostType
 
 class PostInput(graphene.InputObjectType):
     title = graphene.String(required=True)
-    category = graphene.Int(required=False)
+    category = graphene.Int(required=True)
     content = graphene.String(required=True)
     text_content = graphene.String(required=True)
     is_hidden = graphene.Boolean(required=True)
@@ -31,9 +31,10 @@ class CreatePostMutation(graphene.Mutation):
     def mutate(root, info, **args):
         data = args.get("data")
 
-        if "category" in data:
+        print(data.category, type(data.category))
+        if data.category > 0:
             try:
-                category = Category.objects.get(id=data.category)
+                category = Category.objects.get(id=data.category, is_deleted=False)
             except Category.DoesNotExist:
                 raise NotFoundError("게시판을 찾을 수 없습니다")
         else:
@@ -75,9 +76,9 @@ class UpdatePostMutation(graphene.Mutation):
 
         data = args.get("data")
         post.title = data.get("title", post.title)
-        if "category" in data and data.category != 0:
+        if data.category > 0:
             try:
-                post.category = Category.objects.get(id=data.category)
+                post.category = Category.objects.get(id=data.category, is_deleted=False)
             except Category.DoesNotExist:
                 NotFoundError("게시판을 찾을 수 없습니다")
         else:

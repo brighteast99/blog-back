@@ -1,7 +1,7 @@
 import graphene
 from django.db import DatabaseError, IntegrityError
 
-from blog.core.errors import InternalServerError, NotFoundError
+from blog.core.errors import InternalServerError, InvalidValueError, NotFoundError
 from blog.core.models import Category, Draft
 from blog.utils.decorators import login_required
 
@@ -10,7 +10,7 @@ from . import DraftType
 
 class DraftInput(graphene.InputObjectType):
     title = graphene.String(required=True)
-    category = graphene.Int(required=False)
+    category = graphene.Int(required=True)
     content = graphene.String(required=True)
     text_content = graphene.String(required=True)
     is_hidden = graphene.Boolean(required=True)
@@ -30,9 +30,10 @@ class CreateDraftMutation(graphene.Mutation):
     def mutate(root, info, **args):
         data = args.get("data")
 
-        if "category" in data:
+        print(data.category, type(data.category))
+        if data.category > 0:
             try:
-                category = Category.objects.get(id=data.category)
+                category = Category.objects.get(id=data.category, is_deleted=False)
             except Category.DoesNotExist:
                 NotFoundError("게시판을 찾을 수 없습니다")
         else:
