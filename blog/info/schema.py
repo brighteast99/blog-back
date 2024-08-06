@@ -11,6 +11,7 @@ from blog.utils.decorators import login_required
 
 class InfoType(DjangoObjectType):
     avatar = graphene.String()
+    favicon = graphene.String()
 
     class Meta:
         model = Info
@@ -19,6 +20,10 @@ class InfoType(DjangoObjectType):
     @staticmethod
     def resolve_avatar(self, info):
         return self.avatar.url if self.avatar else None
+
+    @staticmethod
+    def resolve_favicon(self, info):
+        return self.favicon.url if self.favicon else None
 
 
 class Query(graphene.ObjectType):
@@ -33,6 +38,7 @@ class InfoInput(graphene.InputObjectType):
     title = graphene.String(required=False)
     description = graphene.String(required=False)
     avatar = Upload(required=False)
+    favicon = Upload(required=False)
 
 
 class UpdateInfoMutation(graphene.Mutation):
@@ -60,6 +66,13 @@ class UpdateInfoMutation(graphene.Mutation):
             else:
                 content_file = ContentFile(avatar_image.read())
                 info.avatar.save(avatar_image.name, content_file, save=True)
+        if "favicon" in data:
+            favicon = data.get("favicon")
+            if favicon is None:
+                info.favicon.delete()
+            else:
+                content_file = ContentFile(favicon.read())
+                info.favicon.save("favicon.ico", content_file, save=True)
 
         try:
             info.save()
