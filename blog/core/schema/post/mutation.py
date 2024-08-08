@@ -11,7 +11,7 @@ from . import PostType
 
 class PostInput(graphene.InputObjectType):
     title = graphene.String(required=True)
-    category = graphene.Int(required=True)
+    category = graphene.Int()
     content = graphene.String(required=True)
     text_content = graphene.String(required=True)
     is_hidden = graphene.Boolean(required=True)
@@ -31,7 +31,7 @@ class CreatePostMutation(graphene.Mutation):
     def mutate(root, info, **args):
         data = args.get("data")
 
-        if data.category > 0:
+        if "category" in data:
             try:
                 category = Category.objects.get(id=data.category, is_deleted=False)
             except Category.DoesNotExist:
@@ -75,7 +75,7 @@ class UpdatePostMutation(graphene.Mutation):
 
         data = args.get("data")
         post.title = data.get("title", post.title)
-        if data.category > 0:
+        if "category" in data:
             try:
                 post.category = Category.objects.get(id=data.category, is_deleted=False)
             except Category.DoesNotExist:
