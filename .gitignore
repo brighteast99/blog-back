@@ -11,9 +11,4 @@ client/
 *pyc
 __pycache__/
 
-.env
-.env.*
-
-Dockerfile.*
-*.yml
-*.sh
+*.conf.py
