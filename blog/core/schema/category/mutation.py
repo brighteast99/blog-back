@@ -1,3 +1,5 @@
+from os.path import splitext
+
 import graphene
 from django.core.files.base import ContentFile
 from django.db import DatabaseError, IntegrityError
@@ -89,11 +91,13 @@ class UpdateCategoryMutation(graphene.Mutation):
 
         if "cover_image" in data:
             cover_image = data.get("cover_image")
-            if cover_image is None:
-                category.cover_image.delete()
-            else:
+            category.cover_image.delete(save=False)
+            if cover_image is not None:
                 content_file = ContentFile(cover_image.read())
-                category.cover_image.save(cover_image.name, content_file, save=True)
+                _, ext = splitext(cover_image.name)
+                category.cover_image.save(
+                    f"{category.id}{ext}", content_file, save=False
+                )
 
         try:
             category.save()

@@ -3,6 +3,8 @@ from django.db import DatabaseError, IntegrityError
 
 from blog.core.errors import InternalServerError, InvalidValueError, NotFoundError
 from blog.core.models import Category, Draft
+from blog.media.models import Image
+from blog.media.utils import get_image, get_images
 from blog.utils.decorators import login_required
 
 from . import DraftType
@@ -34,9 +36,19 @@ class CreateDraftMutation(graphene.Mutation):
             try:
                 category = Category.objects.get(id=data.category, is_deleted=False)
             except Category.DoesNotExist:
-                NotFoundError("게시판을 찾을 수 없습니다")
+                InvalidValueError("게시판을 찾을 수 없습니다")
         else:
             category = None
+
+        try:
+            thumbnail = get_image(data.thumbnail)
+        except Image.DoesNotExist:
+            raise InvalidValueError("유효하지 않은 썸네일입니다")
+
+        try:
+            images = get_images(data.images)
+        except Image.DoesNotExist:
+            raise InvalidValueError("유효하지 않은 이미지가 포함되어 있습니다")
 
         try:
             draft = Draft.objects.create(
@@ -44,10 +56,11 @@ class CreateDraftMutation(graphene.Mutation):
                 category=category,
                 content=data.content,
                 text_content=data.text_content,
+                thumbnail=thumbnail,
                 is_hidden=data.is_hidden,
-                thumbnail=data.thumbnail,
-                images=data.images,
             )
+            draft.images.set(images)
+            draft.save()
         except (DatabaseError, IntegrityError):
             raise InternalServerError()
 

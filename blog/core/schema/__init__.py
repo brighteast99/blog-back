@@ -1,6 +1,5 @@
 from .category import Mutation as CategoryMuataion
 from .category import Query as CategoryQuery
-from .common import Mutation as CommonMutation
 from .draft import Mutation as DraftMuataion
 from .draft import Query as DraftQuery
 from .post import Mutation as PostMuataion
@@ -13,7 +12,5 @@ class Query(CategoryQuery, PostQuery, DraftQuery, TemplateQuery):
     pass
 
 
-class Mutation(
-    CategoryMuataion, PostMuataion, DraftMuataion, TemplateMuataion, CommonMutation
-):
+class Mutation(CategoryMuataion, PostMuataion, DraftMuataion, TemplateMuataion):
     pass

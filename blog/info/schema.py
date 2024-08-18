@@ -1,3 +1,5 @@
+from os.path import splitext
+
 import graphene
 from django.core.files.base import ContentFile
 from django.db import DatabaseError, IntegrityError
@@ -61,11 +63,11 @@ class UpdateInfoMutation(graphene.Mutation):
         info.description = data.get("description", info.description)
         if "avatar" in data:
             avatar_image = data.get("avatar")
-            if avatar_image is None:
-                info.avatar.delete()
-            else:
+            info.avatar.delete()
+            if avatar_image is not None:
                 content_file = ContentFile(avatar_image.read())
-                info.avatar.save(avatar_image.name, content_file, save=True)
+                _, ext = splitext(avatar_image.name)
+                info.avatar.save(f"profile{ext}", content_file, save=True)
         if "favicon" in data:
             favicon = data.get("favicon")
             if favicon is None:

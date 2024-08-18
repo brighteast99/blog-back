@@ -1,8 +1,10 @@
 import graphene
 from django.db import DatabaseError, IntegrityError
 
-from blog.core.errors import InternalServerError, NotFoundError
+from blog.core.errors import InternalServerError, InvalidValueError, NotFoundError
 from blog.core.models import Template
+from blog.media.models import Image
+from blog.media.utils import get_image, get_images
 from blog.utils.decorators import login_required
 
 from . import TemplateType
@@ -29,13 +31,24 @@ class CreateTemplateMutation(graphene.Mutation):
         data = args.get("data")
 
         try:
+            thumbnail = get_image(data.thumbnail)
+        except Image.DoesNotExist:
+            raise InvalidValueError("유효하지 않은 썸네일입니다")
+
+        try:
+            images = get_images(data.images)
+        except Image.DoesNotExist:
+            raise InvalidValueError("유효하지 않은 이미지가 포함되어 있습니다")
+
+        try:
             template = Template.objects.create(
                 title=data.title,
                 content=data.content,
                 text_content=data.text_content,
-                thumbnail=data.thumbnail,
-                images=data.images,
+                thumbnail=thumbnail,
             )
+            template.images.set(images)
+            template.save()
         except (DatabaseError, IntegrityError):
             raise InternalServerError()
 
@@ -64,8 +77,15 @@ class UpdateTemplateMutation(graphene.Mutation):
         template.title = data.get("title", template.title)
         template.content = data.get("content", template.content)
         template.text_content = data.get("text_content", template.text_content)
-        template.thumbnail = data.get("thumbnail")
-        template.images = data.get("images", template.images)
+        try:
+            template.thumbnail = get_image(data.thumbnail)
+        except Image.DoesNotExist:
+            raise InvalidValueError("유효하지 않은 썸네일입니다")
+
+        try:
+            template.images.set(get_images(data.images))
+        except Image.DoesNotExist:
+            raise InvalidValueError("유효하지 않은 이미지가 포함되어 있습니다")
 
         try:
             template.save()

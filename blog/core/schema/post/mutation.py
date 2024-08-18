@@ -1,8 +1,10 @@
 import graphene
 from django.db import DatabaseError, IntegrityError
 
-from blog.core.errors import InternalServerError, NotFoundError
+from blog.core.errors import InternalServerError, InvalidValueError, NotFoundError
 from blog.core.models import Category, Post
+from blog.media.models import Image
+from blog.media.utils import get_image, get_images
 from blog.utils.convertid import localid
 from blog.utils.decorators import login_required
 
@@ -35,9 +37,19 @@ class CreatePostMutation(graphene.Mutation):
             try:
                 category = Category.objects.get(id=data.category, is_deleted=False)
             except Category.DoesNotExist:
-                raise NotFoundError("게시판을 찾을 수 없습니다")
+                raise InvalidValueError("게시판을 찾을 수 없습니다")
         else:
             category = None
+
+        try:
+            thumbnail = get_image(data.thumbnail)
+        except Image.DoesNotExist:
+            raise InvalidValueError("유효하지 않은 썸네일입니다")
+
+        try:
+            images = get_images(data.images)
+        except Image.DoesNotExist:
+            raise InvalidValueError("유효하지 않은 이미지가 포함되어 있습니다")
 
         try:
             post = Post.objects.create(
@@ -45,10 +57,11 @@ class CreatePostMutation(graphene.Mutation):
                 category=category,
                 content=data.content,
                 text_content=data.text_content,
+                thumbnail=thumbnail,
                 is_hidden=data.is_hidden,
-                thumbnail=data.thumbnail,
-                images=data.images,
             )
+            post.images.set(images)
+            post.save()
         except (DatabaseError, IntegrityError):
             raise InternalServerError()
 
@@ -79,14 +92,22 @@ class UpdatePostMutation(graphene.Mutation):
             try:
                 post.category = Category.objects.get(id=data.category, is_deleted=False)
             except Category.DoesNotExist:
-                NotFoundError("게시판을 찾을 수 없습니다")
+                InvalidValueError("존재하지 않는 게시판입니다")
         else:
             post.category = None
+
         post.content = data.get("content", post.content)
         post.text_content = data.get("text_content", post.text_content)
+        try:
+            post.thumbnail = get_image(data.thumbnail)
+        except Image.DoesNotExist:
+            raise InvalidValueError("유효하지 않은 썸네일입니다")
+
+        try:
+            post.images.set(get_images(data.images))
+        except Image.DoesNotExist:
+            raise InvalidValueError("유효하지 않은 이미지가 포함되어 있습니다")
         post.is_hidden = data.get("is_hidden", post.is_hidden)
-        post.thumbnail = data.get("thumbnail")
-        post.images = data.get("images", post.images)
 
         try:
             post.save()

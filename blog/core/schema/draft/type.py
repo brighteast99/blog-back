@@ -9,6 +9,8 @@ class DraftType(DjangoObjectType):
     id = graphene.Int()
     category = graphene.Field(CategoryType)
     summary = graphene.String()
+    thumbnail = graphene.String()
+    images = graphene.List(graphene.String)
 
     class Meta:
         model = Draft
@@ -25,3 +27,11 @@ class DraftType(DjangoObjectType):
     @staticmethod
     def resolve_summary(self, info):
         return f'[{self.category.name if self.category is not None else "분류 미지정"}] {self.title}'
+
+    @staticmethod
+    def resolve_thumbnail(self, info):
+        return self.thumbnail.file.url if self.thumbnail else None
+
+    @staticmethod
+    def resolve_images(self, info):
+        return map(lambda image_model: image_model.file.url, self.images.all())

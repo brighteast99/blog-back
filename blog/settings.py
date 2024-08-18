@@ -13,6 +13,7 @@ AWS_S3_CUSTOM_DOMAIN = f'{os.getenv("AWS_S3_ENDPOINT_URL")}/{AWS_STORAGE_BUCKET_
 AWS_S3_OBJECT_PARAMETERS = {
     "CacheControl": "max-age=86400",
 }
+AWS_S3_FILE_OVERWRITE = False
 AWS_LOCATION = ""
 AWS_DEFAULT_ACL = "public-read"
 
@@ -59,6 +60,7 @@ INSTALLED_APPS = [
     "django_filters",
     "graphene_file_upload.django",
     "graphql_jwt.refresh_token.apps.RefreshTokenConfig",
+    "blog.media",
     "blog.info",
     "blog.core",
     "blog.jwt",

@@ -1,17 +1,21 @@
 import graphene
 
-from blog.core.schema import Mutation as PostMutation
-from blog.core.schema import Query as PostQuery
+from blog.core.schema import Mutation as CoreMutation
+from blog.core.schema import Query as CoreQuery
 from blog.info.schema import Mutation as InfoMutation
 from blog.info.schema import Query as InfoQuery
 from blog.jwt.schema import Mutation as AuthMutation
+from blog.media.schema import Mutation as MediaMutation
+from blog.media.schema import Query as MediaQuery
 
 
-class Query(InfoQuery, PostQuery, graphene.ObjectType):
+class Query(MediaQuery, InfoQuery, CoreQuery, graphene.ObjectType):
     pass
 
 
-class Mutation(InfoMutation, AuthMutation, PostMutation, graphene.ObjectType):
+class Mutation(
+    MediaMutation, InfoMutation, CoreMutation, AuthMutation, graphene.ObjectType
+):
     pass
 
 

@@ -1,6 +1,8 @@
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
 
+from blog.media.models import Image
+
 from . import Category
 
 
@@ -8,8 +10,14 @@ class AbstractTemplate(models.Model):
     title = models.CharField(max_length=100, null=False, blank=False)
     content = models.TextField(blank=True, null=True)
     text_content = models.TextField(blank=True, null=True)
-    thumbnail = models.URLField(blank=True, null=True)
-    images = ArrayField(models.URLField(), default=list)
+    thumbnail = models.ForeignKey(
+        Image,
+        on_delete=models.SET_NULL,
+        related_name="%(class)s_thumbnail_of",
+        null=True,
+        default=None,
+    )
+    images = models.ManyToManyField(Image, related_name="%(class)s_content_of")
 
     class Meta:
         abstract = True
@@ -24,6 +32,13 @@ class Template(AbstractTemplate):
 
 
 class AbstractDraft(AbstractTemplate):
+    category = models.ForeignKey(
+        Category,
+        related_name="%(class)ss",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+    )
     is_hidden = models.BooleanField(default=False)
     created_at = models.DateTimeField(null=False, auto_now_add=True)
 
@@ -32,14 +47,6 @@ class AbstractDraft(AbstractTemplate):
 
 
 class Draft(AbstractDraft):
-    category = models.ForeignKey(
-        Category,
-        related_name="drafts",
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-    )
-
     class Meta:
         ordering = ["-created_at"]
 
@@ -48,9 +55,6 @@ class Draft(AbstractDraft):
 
 
 class Post(AbstractDraft):
-    category = models.ForeignKey(
-        Category, related_name="posts", on_delete=models.SET_NULL, null=True, blank=True
-    )
     text_content = models.TextField(blank=True, null=True)
     is_deleted = models.BooleanField(default=False)
     updated_at = models.DateTimeField(null=False, auto_now=True)
