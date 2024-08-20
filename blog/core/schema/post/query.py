@@ -2,7 +2,7 @@ import math
 
 import graphene
 
-from blog.core.errors import NotFoundError, PermissionDeniedError
+from blog.core.errors import InvalidValueError, NotFoundError, PermissionDeniedError
 from blog.core.models import Post
 from blog.utils.convertid import localid
 
@@ -24,6 +24,7 @@ class Query(graphene.ObjectType):
         page_size=graphene.Int(),
         offset=graphene.Int(),
         target_post=graphene.ID(),
+        order_by=graphene.String(),
     )
 
     @staticmethod
@@ -53,7 +54,7 @@ class Query(graphene.ObjectType):
             data=kwargs, queryset=Post.objects.all(), user=info.context.user
         ).qs
 
-        page_size = kwargs.pop("page_size", queryset.__len__())
+        page_size = kwargs.pop("page_size", queryset.__len__() or 1)
         target_post = kwargs.pop("target_post", None)
 
         if target_post:
@@ -105,7 +106,10 @@ class Query(graphene.ObjectType):
 
                 for [current_start, current_end] in highlights[1:]:
                     last_start, last_end = merged_highlights[-1]
-                    if current_start <= last_end:
+                    if (
+                        current_start <= last_end
+                        or not str[last_end:current_start].strip()
+                    ):
                         merged_highlights[-1] = [last_start, max(last_end, current_end)]
                     else:
                         merged_highlights.append([current_start, current_end])
@@ -119,6 +123,36 @@ class Query(graphene.ObjectType):
                 post.content_highlights = find_keywords(
                     post.text_content.lower(), content_keywords
                 )
+
+        order_by = kwargs.get("order_by", "recent")
+        VALID_CONDITIONS = ["recent", "relavant"]
+        if order_by not in VALID_CONDITIONS:
+            raise InvalidValueError(
+                f"Invalid sort condition '{order_by}'. must be one of: {VALID_CONDITIONS}"
+            )
+
+        if order_by == "relavant":
+
+            def sort_key(post):
+                match_length = lambda highlight: highlight[1] - highlight[0]
+                longest_match_title = max(
+                    map(match_length, [*post.title_highlights, [0, 1]])
+                )
+                longest_match_content = max(
+                    map(match_length, [*post.content_highlights, [0, 1]])
+                )
+                longest_match = max(longest_match_title, longest_match_content)
+                return (
+                    longest_match,
+                    longest_match_title,
+                    longest_match_content,
+                    len(post.title_highlights) + len(post.content_highlights),
+                )
+
+            queryset.sort(
+                key=sort_key,
+                reverse=True,
+            )
 
         return PaginatedPostType(
             posts=queryset,
