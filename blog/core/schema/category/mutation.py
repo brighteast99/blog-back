@@ -30,8 +30,8 @@ class CreateCategoryMutation(graphene.Mutation):
 
     @staticmethod
     @login_required
-    def mutate(root, info, **args):
-        data = args.get("data")
+    def mutate(self, info, **kwargs):
+        data = kwargs.get("data")
 
         if "subcategory_of" in data:
             try:
@@ -66,15 +66,15 @@ class UpdateCategoryMutation(graphene.Mutation):
     @staticmethod
     @login_required
     @atomic
-    def mutate(root, info, **args):
-        category_id = args.get("id")
+    def mutate(self, info, **kwargs):
+        category_id = kwargs.get("id")
 
         try:
             category = Category.objects.get(id=category_id)
         except Category.DoesNotExist:
             raise NotFoundError("게시판을 찾을 수 없습니다")
 
-        data = args.get("data")
+        data = kwargs.get("data")
         category.name = data.get("name")
         if "subcategory_of" in data:
             try:
@@ -116,8 +116,8 @@ class DeleteCategoryMutation(graphene.Mutation):
     @staticmethod
     @atomic
     @login_required
-    def mutate(self, info, **args):
-        category_id = args.get("id")
+    def mutate(self, info, **kwargs):
+        category_id = kwargs.get("id")
 
         try:
             category = Category.objects.get(id=category_id)

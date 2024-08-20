@@ -29,8 +29,8 @@ class CreateDraftMutation(graphene.Mutation):
 
     @staticmethod
     @login_required
-    def mutate(root, info, **args):
-        data = args.get("data")
+    def mutate(self, info, **kwargs):
+        data = kwargs.get("data")
 
         if "category" in data:
             try:
@@ -75,8 +75,8 @@ class DeleteDraftMutation(graphene.Mutation):
 
     @staticmethod
     @login_required
-    def mutate(self, info, **args):
-        draft_id = args.get("id")
+    def mutate(self, info, **kwargs):
+        draft_id = kwargs.get("id")
 
         try:
             draft = Draft.objects.get(id=draft_id)

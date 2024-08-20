@@ -13,9 +13,9 @@ class Query(graphene.ObjectType):
 
     @staticmethod
     @login_required
-    def resolve_draft(root, info, **args):
+    def resolve_draft(self, info, **kwargs):
         try:
-            draft = Draft.objects.get(id=args.get("id"))
+            draft = Draft.objects.get(id=kwargs.get("id"))
         except Draft.DoesNotExist:
             raise NotFoundError("임시 저장본을 찾을 수 없습니다")
 
@@ -23,5 +23,5 @@ class Query(graphene.ObjectType):
 
     @staticmethod
     @login_required
-    def resolve_drafts(root, info, **args):
+    def resolve_drafts(self, info, **kwargs):
         return Draft.objects.all()

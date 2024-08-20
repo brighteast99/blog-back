@@ -13,9 +13,9 @@ class Query(graphene.ObjectType):
 
     @staticmethod
     @login_required
-    def resolve_template(root, info, **args):
+    def resolve_template(self, info, **kwargs):
         try:
-            template = Template.objects.get(id=args.get("id"))
+            template = Template.objects.get(id=kwargs.get("id"))
         except Template.DoesNotExist:
             raise NotFoundError("템플릿을 찾을 수 없습니다")
 
@@ -23,5 +23,5 @@ class Query(graphene.ObjectType):
 
     @staticmethod
     @login_required
-    def resolve_templates(root, info, **args):
+    def resolve_templates(self, info, **kwargs):
         return Template.objects.all()

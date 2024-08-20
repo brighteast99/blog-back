@@ -27,8 +27,8 @@ class CreateTemplateMutation(graphene.Mutation):
 
     @staticmethod
     @login_required
-    def mutate(root, info, **args):
-        data = args.get("data")
+    def mutate(self, info, **kwargs):
+        data = kwargs.get("data")
 
         try:
             thumbnail = get_image(data.thumbnail)
@@ -65,15 +65,15 @@ class UpdateTemplateMutation(graphene.Mutation):
 
     @staticmethod
     @login_required
-    def mutate(root, info, **args):
-        template_id = args.get("id")
+    def mutate(self, info, **kwargs):
+        template_id = kwargs.get("id")
 
         try:
             template = Template.objects.get(id=template_id)
         except Template.DoesNotExist:
             raise NotFoundError("템플릿을 찾을 수 없습니다")
 
-        data = args.get("data")
+        data = kwargs.get("data")
         template.title = data.get("title", template.title)
         template.content = data.get("content", template.content)
         template.text_content = data.get("text_content", template.text_content)
@@ -103,8 +103,8 @@ class DeleteTemplateMutation(graphene.Mutation):
 
     @staticmethod
     @login_required
-    def mutate(self, info, **args):
-        template_id = args.get("id")
+    def mutate(self, info, **kwargs):
+        template_id = kwargs.get("id")
 
         try:
             template = Template.objects.get(id=template_id)

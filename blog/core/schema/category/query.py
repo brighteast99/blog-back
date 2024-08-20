@@ -19,7 +19,7 @@ class Query(graphene.ObjectType):
     valid_supercategories = graphene.List(CategoryType, id=graphene.Int(required=True))
 
     @staticmethod
-    def resolve_category(root, info, **kwargs):
+    def resolve_category(self, info, **kwargs):
         id = kwargs.get("id")
         is_deleted = kwargs.get("is_deleted", False)
 
@@ -45,7 +45,7 @@ class Query(graphene.ObjectType):
         return category
 
     @staticmethod
-    def resolve_categories(root, info):
+    def resolve_categories(self, info):
         categories = Category.objects.filter(is_deleted=False)
         if not info.context.user.is_authenticated:
             return categories.exclude(is_hidden=True)
@@ -53,7 +53,7 @@ class Query(graphene.ObjectType):
         return categories
 
     @staticmethod
-    def resolve_category_hierarchy(root, info):
+    def resolve_category_hierarchy(self, info):
         authenticated = info.context.user.is_authenticated
         root_categories = Category.objects.root_nodes().filter(is_deleted=False)
         all_posts = Post.objects.exclude(
@@ -110,8 +110,8 @@ class Query(graphene.ObjectType):
 
     @login_required
     @staticmethod
-    def resolve_valid_supercategories(root, info, **args):
-        id = args.get("id")
+    def resolve_valid_supercategories(self, info, **kwargs):
+        id = kwargs.get("id")
         try:
             result = Category.objects.get(id=id)
         except Category.DoesNotExist:

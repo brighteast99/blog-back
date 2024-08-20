@@ -30,8 +30,8 @@ class CreatePostMutation(graphene.Mutation):
 
     @staticmethod
     @login_required
-    def mutate(root, info, **args):
-        data = args.get("data")
+    def mutate(self, info, **kwargs):
+        data = kwargs.get("data")
 
         if "category" in data:
             try:
@@ -78,15 +78,15 @@ class UpdatePostMutation(graphene.Mutation):
 
     @staticmethod
     @login_required
-    def mutate(root, info, **args):
-        post_id = localid(args.get("id"))
+    def mutate(self, info, **kwargs):
+        post_id = localid(kwargs.get("id"))
 
         try:
             post = Post.objects.get(id=post_id)
         except Post.DoesNotExist:
             raise NotFoundError("게시글을 찾을 수 없습니다")
 
-        data = args.get("data")
+        data = kwargs.get("data")
         post.title = data.get("title", post.title)
         if "category" in data:
             try:
@@ -125,8 +125,8 @@ class DeletePostMutation(graphene.Mutation):
 
     @staticmethod
     @login_required
-    def mutate(self, info, **args):
-        post_id = localid(args.get("id"))
+    def mutate(self, info, **kwargs):
+        post_id = localid(kwargs.get("id"))
 
         try:
             post = Post.objects.get(id=post_id)

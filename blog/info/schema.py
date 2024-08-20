@@ -32,7 +32,7 @@ class Query(graphene.ObjectType):
     blog_info = graphene.Field(InfoType)
 
     @staticmethod
-    def resolve_blog_info(root, info):
+    def resolve_blog_info(self, info):
         return Info.objects.first()
 
 
@@ -52,13 +52,13 @@ class UpdateInfoMutation(graphene.Mutation):
 
     @staticmethod
     @login_required
-    def mutate(root, _info, **args):
+    def mutate(self, _info, **kwargs):
         try:
             info = Info.objects.first()
         except Info.DoesNotExist:
             info = Info(title="", description="", avatar=None)
 
-        data = args.get("data")
+        data = kwargs.get("data")
         info.title = data.get("title", info.title)
         info.description = data.get("description", info.description)
         if "avatar" in data:
