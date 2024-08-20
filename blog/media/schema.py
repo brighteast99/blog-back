@@ -15,7 +15,7 @@ class Query(graphene.ObjectType):
 
     @staticmethod
     def resolve_images(self, info, **kwargs):
-        return get_images()
+        return map(lambda image: image.file.url, Image.objects.all())
 
 
 class UploadImageMutation(graphene.Mutation):
@@ -28,7 +28,7 @@ class UploadImageMutation(graphene.Mutation):
     @login_required
     def mutate(self, info, **kwargs):
         file = kwargs.get("file")
-        path = default_storage.save(f"media/{file.name}", ContentFile(file.read()))
+        path = default_storage.save(f"media/{file.name}"[:50], ContentFile(file.read()))
         created_image = Image.objects.create(file=path)
         return UploadImageMutation(url=created_image.file.url)
 
