@@ -1,10 +1,11 @@
 from urllib.parse import unquote
 
 from blog.media.models import Image
+from blog.settings import AWS_S3_CUSTOM_DOMAIN
 
 
 def get_filename_from_url(url):
-    return unquote(url.split("/")[-1])
+    return unquote(url.split(AWS_S3_CUSTOM_DOMAIN)[-1][1:])
 
 
 def get_image(url=None):
