@@ -23,7 +23,7 @@ DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
 
 DEBUG = os.getenv("DJANGO_DEBUG", "false").lower() == "true"
 
-ALLOWED_HOSTS = ["localhost", os.getenv("PROXY_HOST")]
+ALLOWED_HOSTS = ["localhost", "127.0.0.1", os.getenv("PROXY_HOST")]
 
 ADMIN_HOSTS = os.getenv("ADMIN_HOSTS", "").split()
 
