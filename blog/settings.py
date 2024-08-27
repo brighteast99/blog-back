@@ -28,7 +28,7 @@ ALLOWED_HOSTS = ["localhost", "127.0.0.1", os.getenv("PROXY_HOST")]
 ADMIN_HOSTS = os.getenv("ADMIN_HOSTS", "").split()
 
 CORS_ALLOW_CREDENTIALS = True
-CORS_ORIGIN_WHITELIST = ["http://localhost:3000", os.getenv("PROXY_ORIGIN")]
+CORS_ORIGIN_WHITELIST = ["http://localhost", os.getenv("PROXY_ORIGIN")]
 CORS_ALLOW_METHODS = (
     "GET",
     "OPTIONS",
@@ -46,7 +46,7 @@ CORS_ALLOW_HEADERS = (
     "x-requested-with",
 )
 
-CSRF_TRUSTED_ORIGINS = ["http://localhost:3000", os.getenv("PROXY_ORIGIN")]
+CSRF_TRUSTED_ORIGINS = ["http://blog.localhost", os.getenv("PROXY_ORIGIN")]
 
 INSTALLED_APPS = [
     "django.contrib.admin",
