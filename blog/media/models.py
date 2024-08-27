@@ -5,7 +5,12 @@ from blog.storage import Cafe24OBS
 
 class Image(models.Model):
     file = models.ImageField(
-        blank=False, null=False, unique=True, storage=Cafe24OBS, upload_to="media/"
+        blank=False,
+        null=False,
+        unique=True,
+        storage=Cafe24OBS,
+        upload_to="media/",
+        editable=False,
     )
     uploaded_at = models.DateTimeField(null=False, auto_now_add=True)
 
