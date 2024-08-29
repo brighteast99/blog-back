@@ -11,7 +11,11 @@ class Image(models.Model):
         storage=Cafe24OBS,
         upload_to="media/",
         editable=False,
+        width_field="width",
+        height_field="height",
     )
+    width = models.IntegerField(null=True, blank=True)
+    height = models.IntegerField(null=True, blank=True)
     uploaded_at = models.DateTimeField(null=False, auto_now_add=True)
 
     class Meta:
