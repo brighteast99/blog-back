@@ -11,6 +11,7 @@ from . import TemplateType
 
 
 class TemplateInput(graphene.InputObjectType):
+    template_name = graphene.String(required=True)
     title = graphene.String(required=True)
     content = graphene.String(required=True)
     text_content = graphene.String(required=True)
@@ -42,6 +43,7 @@ class CreateTemplateMutation(graphene.Mutation):
 
         try:
             template = Template.objects.create(
+                template_name=data.template_name,
                 title=data.title,
                 content=data.content,
                 text_content=data.text_content,
@@ -74,6 +76,7 @@ class UpdateTemplateMutation(graphene.Mutation):
             raise NotFoundError("템플릿을 찾을 수 없습니다")
 
         data = kwargs.get("data")
+        template.template_name = data.get("template_name", template.template_name)
         template.title = data.get("title", template.title)
         template.content = data.get("content", template.content)
         template.text_content = data.get("text_content", template.text_content)

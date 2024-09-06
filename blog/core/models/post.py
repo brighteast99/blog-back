@@ -24,11 +24,13 @@ class AbstractTemplate(models.Model):
 
 
 class Template(AbstractTemplate):
+    template_name = models.CharField(max_length=100, null=False, blank=False)
+
     class Meta:
-        ordering = ["title"]
+        ordering = ["template_name"]
 
     def __str__(self):
-        return f"{self.title}"
+        return f"{self.template_name}"
 
 
 class AbstractDraft(AbstractTemplate):
