@@ -55,31 +55,31 @@ class ImageType(DjangoObjectType):
         return (
             self.template_thumbnail_of.exists()
             or self.draft_thumbnail_of.exists()
-            or self.post_thumbnail_of.exists()
+            or self.post_thumbnail_of.filter(is_deleted=False).exists()
             or self.template_content_of.exists()
             or self.draft_content_of.exists()
-            or self.post_content_of.exists()
+            or self.post_content_of.filter(is_deleted=False).exists()
         )
 
     def resolve_thumbnail_reference_count(self, info):
         count = 0
         count += self.template_thumbnail_of.count()
         count += self.draft_thumbnail_of.count()
-        count += self.post_thumbnail_of.count()
+        count += self.post_thumbnail_of.filter(is_deleted=False).count()
         return count
 
     def resolve_post_thumbnail_of(self, info):
-        return self.post_thumbnail_of.all()
+        return self.post_thumbnail_of.filter(is_deleted=False).all()
 
     def resolve_content_reference_count(self, info):
         count = 0
         count += self.template_content_of.count()
         count += self.draft_content_of.count()
-        count += self.post_content_of.count()
+        count += self.post_content_of.filter(is_deleted=False).count()
         return count
 
     def resolve_post_content_of(self, info):
-        return self.post_content_of.all()
+        return self.post_content_of.filter(is_deleted=False).all()
 
 
 class Query(graphene.ObjectType):
