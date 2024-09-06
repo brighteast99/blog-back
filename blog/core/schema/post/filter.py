@@ -26,7 +26,7 @@ class PostFilter(FilterSet):
     def qs(self):
         queryset = super().qs
 
-        queryset = queryset.exclude(Q(is_deleted=True) | Q(category__is_deleted=True))
+        queryset = queryset.exclude(is_deleted=True)
 
         if not self.user.is_authenticated:
             queryset = queryset.exclude(Q(is_hidden=True) | Q(category__is_hidden=True))

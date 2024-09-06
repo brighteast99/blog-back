@@ -110,6 +110,7 @@ class UpdateCategoryMutation(graphene.Mutation):
 class DeleteCategoryMutation(graphene.Mutation):
     class Arguments:
         id = graphene.Int(required=True)
+        delete_posts = graphene.Boolean()
 
     success = graphene.Boolean()
 
@@ -118,12 +119,21 @@ class DeleteCategoryMutation(graphene.Mutation):
     @login_required
     def mutate(self, info, **kwargs):
         category_id = kwargs.get("id")
+        delete_posts = kwargs.get("delete_posts", False)
 
         try:
             category = Category.objects.get(id=category_id)
-            category.get_descendants().update(is_deleted=True)
-            category.is_deleted = True
-            category.save()
+            for subcategory in category.get_descendants(include_self=True):
+                subcategory.is_deleted = True
+                subcategory.save(update_fields=["is_deleted"])
+                for post in subcategory.posts.all():
+                    if delete_posts:
+                        post.is_deleted = True
+                        post.save(update_fields=["is_deleted"])
+                    else:
+                        post.category = None
+                        post.save(update_fields=["category"])
+
             return DeleteCategoryMutation(success=True)
         except Category.DoesNotExist:
             raise NotFoundError("게시판을 찾을 수 없습니다")

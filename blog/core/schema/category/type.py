@@ -62,7 +62,7 @@ class CategoryType(DjangoObjectType):
 
     @staticmethod
     def resolve_post_count(self, info, exclude_subcategories=False):
-        posts = Post.objects.exclude(Q(is_deleted=True) | Q(category__is_deleted=True))
+        posts = Post.objects.exclude(is_deleted=True)
 
         if not info.context.user.is_authenticated:
             posts = posts.exclude(Q(is_hidden=True) | Q(category__is_hidden=True))
@@ -76,8 +76,7 @@ class CategoryType(DjangoObjectType):
                 posts = self.posts
             else:
                 posts = Post.objects.filter(
-                    category__in=Category.get_descendants(self, include_self=True),
-                    category__is_deleted=False,
+                    category__in=Category.get_descendants(self, include_self=True)
                 )
 
         return posts.count()

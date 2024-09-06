@@ -131,7 +131,7 @@ class DeletePostMutation(graphene.Mutation):
         try:
             post = Post.objects.get(id=post_id)
             post.is_deleted = True
-            post.save()
+            post.save(update_fields=["is_deleted"])
             return DeletePostMutation(success=True)
         except Post.DoesNotExist:
             raise NotFoundError("게시글을 찾을 수 없습니다")

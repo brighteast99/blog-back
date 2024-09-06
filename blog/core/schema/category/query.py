@@ -56,9 +56,7 @@ class Query(graphene.ObjectType):
     def resolve_category_hierarchy(self, info):
         authenticated = info.context.user.is_authenticated
         root_categories = Category.objects.root_nodes().filter(is_deleted=False)
-        all_posts = Post.objects.exclude(
-            Q(is_deleted=True) | Q(category__is_deleted=True)
-        )
+        all_posts = Post.objects.exclude(is_deleted=True)
 
         if not authenticated:
             root_categories = root_categories.exclude(is_hidden=True)
