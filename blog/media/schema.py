@@ -146,6 +146,30 @@ class DeleteImageMutation(graphene.Mutation):
         return DeleteImageMutation(success=True)
 
 
+class DeleteImagesMutation(graphene.Mutation):
+    class Arguments:
+        urls = graphene.List(graphene.String, required=True)
+
+    success = graphene.Boolean()
+
+    @staticmethod
+    @login_required
+    def mutate(self, info, **kwargs):
+        urls = kwargs.get("urls")
+        images = list(map(lambda url: get_image(url), urls))
+        for image in images:
+            if image is None:
+                raise NotFoundError("이미지를 찾을 수 없습니다")
+
+            try:
+                image.delete()
+            except DatabaseError:
+                raise InternalServerError()
+
+        return DeleteImagesMutation(success=True)
+
+
 class Mutation(graphene.ObjectType):
     upload_image = UploadImageMutation.Field()
     delete_image = DeleteImageMutation.Field()
+    delete_images = DeleteImagesMutation.Field()
