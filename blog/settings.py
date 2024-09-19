@@ -4,11 +4,15 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY_PATH = os.getenv("DJANGO_SECRET_KEY_PATH")
-with open(SECRET_KEY_PATH, 'r') as key:
+with open(SECRET_KEY_PATH, "r") as key:
     SECRET_KEY = key.read()
 
-AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
-AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
+AWS_ACCESS_KEY_ID_PATH = os.getenv("AWS_ACCESS_KEY_ID_PATH")
+with open(AWS_ACCESS_KEY_ID_PATH, "r") as key:
+    AWS_ACCESS_KEY_ID = key.read()
+AWS_SECRET_ACCESS_KEY_PATH = os.getenv("AWS_SECRET_ACCESS_KEY_PATH")
+with open(AWS_SECRET_ACCESS_KEY_PATH, "r") as key:
+    AWS_SECRET_ACCESS_KEY = key.read()
 AWS_S3_ENDPOINT_URL = f'https://{os.getenv("AWS_S3_ENDPOINT_URL")}'
 AWS_STORAGE_BUCKET_NAME = os.getenv("AWS_STORAGE_BUCKET_NAME")
 AWS_S3_CUSTOM_DOMAIN = f'{os.getenv("AWS_S3_ENDPOINT_URL")}/{AWS_STORAGE_BUCKET_NAME}'
