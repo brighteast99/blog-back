@@ -92,7 +92,7 @@ class UpdatePostMutation(graphene.Mutation):
             try:
                 post.category = Category.objects.get(id=data.category, is_deleted=False)
             except Category.DoesNotExist:
-                InvalidValueError("존재하지 않는 게시판입니다")
+                InvalidValueError("게시판을 찾을 수 없습니다")
         else:
             post.category = None
 
