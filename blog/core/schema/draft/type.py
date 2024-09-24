@@ -26,7 +26,7 @@ class DraftType(DjangoObjectType):
 
     @staticmethod
     def resolve_summary(self, info):
-        return f'[{self.category.name if self.category is not None else "분류 미지정"}] {self.title}'
+        return f'[{self.category.name if self.category is not None else "분류 미지정"}] {self.title or "제목 없음"}'
 
     @staticmethod
     def resolve_thumbnail(self, info):
