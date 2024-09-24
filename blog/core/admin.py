@@ -62,7 +62,15 @@ class DraftAdmin(admin.ModelAdmin):
             f'<div style="max-height: 300px; overflow-y: auto">{instance.content}</div>'
         )
 
-    list_display = ("id", "category", "title", "preview", "created_at", "is_hidden")
+    list_display = (
+        "id",
+        "category",
+        "title",
+        "preview",
+        "created_at",
+        "updated_at",
+        "is_hidden",
+    )
 
 
 admin.site.register(Draft, DraftAdmin)
