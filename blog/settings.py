@@ -103,14 +103,19 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "blog.wsgi.application"
 
-with open("/run/secrets/postgres-user", "r") as key:
-    POSTGRES_USER = key.read()
+try:
+    with open("/run/secrets/postgres-user", "r") as key:
+        POSTGRES_USER = key.read()
 
-with open("/run/secrets/postgres-password", "r") as key:
-    POSTGRES_PASSWORD = key.read()
+    with open("/run/secrets/postgres-password", "r") as key:
+        POSTGRES_PASSWORD = key.read()
 
-with open("/postgres-host", "r") as key:
-    POSTGRES_HOST = key.read()
+    with open("/postgres-host", "r") as key:
+        POSTGRES_HOST = key.read()
+except FileNotFoundError:
+    POSTGRES_USER = "user"
+    POSTGRES_PASSWORD = "pw"
+    POSTGRES_HOST = "host"
 
 DATABASES = {
     "default": {
