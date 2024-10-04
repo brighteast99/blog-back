@@ -3,15 +3,12 @@ from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY_PATH = os.getenv("DJANGO_SECRET_KEY_PATH")
-with open(SECRET_KEY_PATH, "r") as key:
+with open("/run/secrets/django-secret-key", "r") as key:
     SECRET_KEY = key.read()
 
-AWS_ACCESS_KEY_ID_PATH = os.getenv("AWS_ACCESS_KEY_ID_PATH")
-with open(AWS_ACCESS_KEY_ID_PATH, "r") as key:
+with open("/run/secrets/aws-access-key-id", "r") as key:
     AWS_ACCESS_KEY_ID = key.read()
-AWS_SECRET_ACCESS_KEY_PATH = os.getenv("AWS_SECRET_ACCESS_KEY_PATH")
-with open(AWS_SECRET_ACCESS_KEY_PATH, "r") as key:
+with open("/run/secrets/aws-secret-access-key", "r") as key:
     AWS_SECRET_ACCESS_KEY = key.read()
 AWS_S3_ENDPOINT_URL = f'https://{os.getenv("AWS_S3_ENDPOINT_URL")}'
 AWS_STORAGE_BUCKET_NAME = os.getenv("AWS_STORAGE_BUCKET_NAME")
@@ -106,13 +103,22 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "blog.wsgi.application"
 
+with open("/run/secrets/postgres-user", "r") as key:
+    POSTGRES_USER = key.read()
+
+with open("/run/secrets/postgres-password", "r") as key:
+    POSTGRES_PASSWORD = key.read()
+
+with open("/postgres-host", "r") as key:
+    POSTGRES_HOST = key.read()
+
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": os.getenv("POSTGRES_DB"),
-        "USER": os.getenv("POSTGRES_USER"),
-        "PASSWORD": os.getenv("POSTGRES_PASSWORD"),
-        "HOST": os.getenv("POSTGRES_HOST"),
+        "NAME": "blog",
+        "USER": POSTGRES_USER,
+        "PASSWORD": POSTGRES_PASSWORD,
+        "HOST": POSTGRES_HOST,
         "PORT": "5432",
         "ATOMIC_REQUESTS": True,
     }
