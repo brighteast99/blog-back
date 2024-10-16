@@ -17,6 +17,7 @@ class AbstractTemplate(models.Model):
         default=None,
     )
     images = models.ManyToManyField(Image, related_name="%(class)s_content_of")
+    tags = models.CharField(max_length=200, null=False, blank=True)
 
     class Meta:
         abstract = True
