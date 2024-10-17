@@ -11,17 +11,20 @@ class Hashtag(models.Model):
 
 class AbstractTemplate(models.Model):
     title = models.CharField(max_length=100, null=False, blank=False)
-    content = models.TextField(blank=True, null=True)
-    text_content = models.TextField(blank=True, null=True)
+    content = models.TextField(null=True, blank=True)
+    text_content = models.TextField(null=True, blank=True)
     thumbnail = models.ForeignKey(
         Image,
         on_delete=models.SET_NULL,
         related_name="%(class)s_thumbnail_of",
         null=True,
+        blank=True,
         default=None,
     )
-    images = models.ManyToManyField(Image, related_name="%(class)s_content_of")
-    tags = models.ManyToManyField(Hashtag, related_name="tagged_%(class)s")
+    images = models.ManyToManyField(
+        Image, related_name="%(class)s_content_of", blank=True
+    )
+    tags = models.ManyToManyField(Hashtag, related_name="tagged_%(class)s", blank=True)
 
     class Meta:
         abstract = True
@@ -62,9 +65,9 @@ class Draft(AbstractDraft):
 
 
 class Post(AbstractDraft):
-    text_content = models.TextField(blank=True, null=True)
+    text_content = models.TextField(null=True, blank=True)
     is_deleted = models.BooleanField(default=False)
-    deleted_at = models.DateTimeField(null=True)
+    deleted_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         ordering = ["-created_at"]
