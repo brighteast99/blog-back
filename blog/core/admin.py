@@ -24,7 +24,16 @@ def format_tags(tags: List[str]):
 
 
 class HashtagAdmin(admin.ModelAdmin):
-    list_display = ("id", "name")
+    list_display = ("id", "name", "tagged_templates", "tagged_drafts", "tagged_posts")
+
+    def tagged_templates(self, instance: Hashtag):
+        return list(instance.tagged_template.values_list("title", flat=True))
+
+    def tagged_drafts(self, instance: Hashtag):
+        return list(instance.tagged_draft.values_list("title", flat=True))
+
+    def tagged_posts(self, instance: Hashtag):
+        return list(instance.tagged_post.values_list("title", flat=True))
 
 
 admin.site.register(Hashtag, HashtagAdmin)
