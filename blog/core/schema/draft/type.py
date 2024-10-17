@@ -34,4 +34,4 @@ class DraftType(DjangoObjectType):
 
     @staticmethod
     def resolve_images(self, info):
-        return map(lambda image_model: image_model.file.url, self.images.all())
+        return self.images.values_list("file", flat=True)
