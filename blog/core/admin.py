@@ -1,8 +1,10 @@
+from typing import List
+
 from django.contrib import admin
 from django.utils.html import format_html
 from mptt.admin import DraggableMPTTAdmin
 
-from blog.core.models import Category, Draft, Post, Template
+from blog.core.models import Category, Draft, Hashtag, Post, Template
 
 
 def content_preview(content: str):
@@ -11,14 +13,21 @@ def content_preview(content: str):
     )
 
 
-def format_tags(tags: str):
+def format_tags(tags: List[str]):
     spans = list(
         map(
             lambda tag: f'<span style="padding: 1px 2px; margin: 0 2px; background-color:dimgray; border: 1px solid gray; border-radius: 4px;">#{tag}</span>',
-            tags.split(),
+            tags,
         )
     )
     return format_html("".join(spans))
+
+
+class HashtagAdmin(admin.ModelAdmin):
+    list_display = ("id", "name")
+
+
+admin.site.register(Hashtag, HashtagAdmin)
 
 
 class CategoryAdmin(DraggableMPTTAdmin):
@@ -47,7 +56,7 @@ admin.site.register(Category, CategoryAdmin)
 
 class PostAdmin(admin.ModelAdmin):
     def assigned_tags(self, instance: Post):
-        return format_tags(instance.tags)
+        return format_tags(instance.tags.values_list("name", flat=True))
 
     list_display = (
         "id",
@@ -70,7 +79,7 @@ class TemplateAdmin(admin.ModelAdmin):
         return content_preview(instance.content)
 
     def assigned_tags(self, instance: Template):
-        return format_tags(instance.tags)
+        return format_tags(instance.tags.values_list("name", flat=True))
 
     list_display = (
         "id",
@@ -89,7 +98,7 @@ class DraftAdmin(admin.ModelAdmin):
         return content_preview(instance.content)
 
     def assigned_tags(self, instance: Draft):
-        return format_tags(instance.tags)
+        return format_tags(instance.tags.values_list("name", flat=True))
 
     list_display = (
         "id",

@@ -5,6 +5,10 @@ from blog.media.models import Image
 from . import Category
 
 
+class Hashtag(models.Model):
+    name = models.CharField(max_length=20, null=False, blank=False, unique=True)
+
+
 class AbstractTemplate(models.Model):
     title = models.CharField(max_length=100, null=False, blank=False)
     content = models.TextField(blank=True, null=True)
@@ -17,7 +21,7 @@ class AbstractTemplate(models.Model):
         default=None,
     )
     images = models.ManyToManyField(Image, related_name="%(class)s_content_of")
-    tags = models.CharField(max_length=200, null=False, blank=True)
+    tags = models.ManyToManyField(Hashtag, related_name="tagged_%(class)s")
 
     class Meta:
         abstract = True
