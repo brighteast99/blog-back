@@ -1,8 +1,9 @@
 import graphene
 from django.db import DatabaseError, IntegrityError
+from django.db.transaction import atomic
 
 from blog.core.errors import InternalServerError, InvalidValueError, NotFoundError
-from blog.core.models import Template
+from blog.core.models import Hashtag, Template
 from blog.media.models import Image
 from blog.media.utils import get_image, get_images
 from blog.utils.decorators import login_required
@@ -16,7 +17,8 @@ class TemplateInput(graphene.InputObjectType):
     content = graphene.String(required=True)
     text_content = graphene.String(required=True)
     thumbnail = graphene.String(required=False)
-    images = graphene.List(graphene.String, required=True, default=list)
+    images = graphene.List(graphene.String, required=True)
+    tags = graphene.List(graphene.String, required=True)
 
 
 class CreateTemplateMutation(graphene.Mutation):
@@ -27,6 +29,7 @@ class CreateTemplateMutation(graphene.Mutation):
     created_template = graphene.Field(TemplateType)
 
     @staticmethod
+    @atomic
     @login_required
     def mutate(self, info, **kwargs):
         data = kwargs.get("data")
@@ -50,7 +53,16 @@ class CreateTemplateMutation(graphene.Mutation):
                 thumbnail=thumbnail,
             )
             template.images.set(images)
-            template.save()
+            template.save(update_fields=["images"])
+        except (DatabaseError, IntegrityError):
+            raise InternalServerError()
+
+        try:
+            input_tag_names = set(data.tags)
+
+            for name in input_tag_names:
+                tag, _ = Hashtag.objects.get_or_create(name=name)
+                template.tags.add(tag)
         except (DatabaseError, IntegrityError):
             raise InternalServerError()
 
@@ -61,11 +73,13 @@ class UpdateTemplateMutation(graphene.Mutation):
     class Arguments:
         id = graphene.Int(required=True)
         data = TemplateInput(required=True)
+        delete_orphan_tags = graphene.Boolean(required=False)
 
     success = graphene.Boolean()
     updated_template = graphene.Field(TemplateType)
 
     @staticmethod
+    @atomic
     @login_required
     def mutate(self, info, **kwargs):
         template_id = kwargs.get("id")
@@ -90,6 +104,27 @@ class UpdateTemplateMutation(graphene.Mutation):
         except Image.DoesNotExist:
             raise InvalidValueError("유효하지 않은 이미지가 포함되어 있습니다")
 
+        input_tag_names = set(data.tags)
+        previous_tag_names = set(template.tags.values_list("name", flat=True))
+        tags_to_add = input_tag_names - previous_tag_names
+        try:
+            for name in tags_to_add:
+                tag, _ = Hashtag.objects.get_or_create(name=name)
+                template.tags.add(tag)
+        except (DatabaseError, IntegrityError):
+            raise InternalServerError()
+
+        tags_to_remove = template.tags.exclude(name__in=input_tag_names)
+        delete_orphan_tags = kwargs.get("delete_orphan_tags", False)
+        try:
+            for tag in tags_to_remove:
+                template.tags.remove(tag)
+
+                if delete_orphan_tags and tag.is_orphan:
+                    tag.delete()
+        except DatabaseError:
+            raise InternalServerError()
+
         try:
             template.save()
         except (DatabaseError, IntegrityError):
@@ -101,22 +136,34 @@ class UpdateTemplateMutation(graphene.Mutation):
 class DeleteTemplateMutation(graphene.Mutation):
     class Arguments:
         id = graphene.Int(required=True)
+        delete_orphan_tags = graphene.Boolean(required=False)
 
     success = graphene.Boolean()
 
     @staticmethod
+    @atomic
     @login_required
     def mutate(self, info, **kwargs):
         template_id = kwargs.get("id")
+        delete_orphan_tag = kwargs.get("delete_orphan_tags", False)
 
         try:
             template = Template.objects.get(id=template_id)
-            template.delete()
-            return DeleteTemplateMutation(success=True)
         except Template.DoesNotExist:
             raise NotFoundError("템플릿을 찾을 수 없습니다")
+
+        try:
+            for tag in template.tags.all():
+                template.tags.remove(tag)
+
+                if delete_orphan_tag and tag.is_orphan:
+                    tag.delete()
+
+            template.delete()
         except DatabaseError:
             raise InternalServerError()
+
+        return DeleteTemplateMutation(success=True)
 
 
 class Mutation(graphene.ObjectType):

@@ -1,8 +1,9 @@
 import graphene
 from django.db import DatabaseError, IntegrityError
+from django.db.transaction import atomic
 
 from blog.core.errors import InternalServerError, InvalidValueError, NotFoundError
-from blog.core.models import Category, Post
+from blog.core.models import Category, Hashtag, Post
 from blog.media.models import Image
 from blog.media.utils import get_image, get_images
 from blog.utils.convertid import localid
@@ -19,6 +20,7 @@ class PostInput(graphene.InputObjectType):
     is_hidden = graphene.Boolean(required=True)
     thumbnail = graphene.String(required=False)
     images = graphene.List(graphene.String, required=True, default=list)
+    tags = graphene.List(graphene.String, required=True)
 
 
 class CreatePostMutation(graphene.Mutation):
@@ -29,6 +31,7 @@ class CreatePostMutation(graphene.Mutation):
     created_post = graphene.Field(PostType)
 
     @staticmethod
+    @atomic
     @login_required
     def mutate(self, info, **kwargs):
         data = kwargs.get("data")
@@ -65,6 +68,15 @@ class CreatePostMutation(graphene.Mutation):
         except (DatabaseError, IntegrityError):
             raise InternalServerError()
 
+        try:
+            input_tag_names = set(data.tags)
+
+            for name in input_tag_names:
+                tag, _ = Hashtag.objects.get_or_create(name=name)
+                post.tags.add(tag)
+        except (DatabaseError, IntegrityError):
+            raise InternalServerError()
+
         return CreatePostMutation(success=True, created_post=post)
 
 
@@ -72,11 +84,13 @@ class UpdatePostMutation(graphene.Mutation):
     class Arguments:
         id = graphene.ID(required=True)
         data = PostInput(required=True)
+        delete_orphan_tags = graphene.Boolean(required=False)
 
     success = graphene.Boolean()
     updated_post = graphene.Field(PostType)
 
     @staticmethod
+    @atomic
     @login_required
     def mutate(self, info, **kwargs):
         post_id = localid(kwargs.get("id"))
@@ -109,6 +123,27 @@ class UpdatePostMutation(graphene.Mutation):
             raise InvalidValueError("유효하지 않은 이미지가 포함되어 있습니다")
         post.is_hidden = data.get("is_hidden", post.is_hidden)
 
+        input_tag_names = set(data.tags)
+        previous_tag_names = set(post.tags.values_list("name", flat=True))
+        tags_to_add = input_tag_names - previous_tag_names
+        try:
+            for name in tags_to_add:
+                tag, _ = Hashtag.objects.get_or_create(name=name)
+                post.tags.add(tag)
+        except (DatabaseError, IntegrityError):
+            raise InternalServerError()
+
+        tags_to_remove = post.tags.exclude(name__in=input_tag_names)
+        delete_orphan_tags = kwargs.get("delete_orphan_tags", False)
+        try:
+            for tag in tags_to_remove:
+                post.tags.remove(tag)
+
+                if delete_orphan_tags and tag.is_orphan:
+                    tag.delete()
+        except DatabaseError:
+            raise InternalServerError()
+
         try:
             post.save()
         except (DatabaseError, IntegrityError):
@@ -120,23 +155,36 @@ class UpdatePostMutation(graphene.Mutation):
 class DeletePostMutation(graphene.Mutation):
     class Arguments:
         id = graphene.ID(required=True)
+        delete_orphan_tags = graphene.Boolean(required=False)
 
     success = graphene.Boolean()
 
     @staticmethod
+    @atomic
     @login_required
     def mutate(self, info, **kwargs):
         post_id = localid(kwargs.get("id"))
+        delete_orphan_tag = kwargs.get("delete_orphan_tags", False)
 
         try:
             post = Post.objects.get(id=post_id)
             post.is_deleted = True
             post.save(update_fields=["is_deleted"])
-            return DeletePostMutation(success=True)
         except Post.DoesNotExist:
             raise NotFoundError("게시글을 찾을 수 없습니다")
+
+        try:
+            for tag in post.tags.all():
+                post.tags.remove(tag)
+
+                if delete_orphan_tag and tag.is_orphan:
+                    tag.delete()
+
+            post.delete()
         except DatabaseError:
             raise InternalServerError()
+
+        return DeletePostMutation(success=True)
 
 
 class Mutation(graphene.ObjectType):

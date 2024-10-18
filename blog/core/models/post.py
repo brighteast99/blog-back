@@ -8,6 +8,14 @@ from . import Category
 class Hashtag(models.Model):
     name = models.CharField(max_length=20, null=False, blank=False, unique=True)
 
+    def is_orphan(self):
+        return (
+            self.tagged_template.count()
+            + self.tagged_draft.count()
+            + self.tagged_post.count()
+            == 0
+        )
+
 
 class AbstractTemplate(models.Model):
     title = models.CharField(max_length=100, null=False, blank=False)

@@ -13,6 +13,7 @@ class PostType(DjangoObjectType):
     category = graphene.Field(CategoryType)
     thumbnail = graphene.String()
     images = graphene.List(graphene.String)
+    tags = graphene.List(graphene.String)
     title_highlights = graphene.List(graphene.List(graphene.Int))
     content_highlights = graphene.List(graphene.List(graphene.Int))
 
@@ -34,6 +35,10 @@ class PostType(DjangoObjectType):
     def resolve_images(self, info):
         urls = self.images.values_list("file", flat=True)
         return urls
+
+    @staticmethod
+    def resolve_tags(self, info):
+        return self.tags.values_list("name", flat=True)
 
 
 class PaginatedPostType(graphene.ObjectType):

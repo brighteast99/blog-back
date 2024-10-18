@@ -8,6 +8,7 @@ class TemplateType(DjangoObjectType):
     id = graphene.Int()
     thumbnail = graphene.String()
     images = graphene.List(graphene.String)
+    tags = graphene.List(graphene.String)
 
     class Meta:
         model = Template
@@ -24,3 +25,7 @@ class TemplateType(DjangoObjectType):
     @staticmethod
     def resolve_images(self, info):
         return self.images.values_list("file", flat=True)
+
+    @staticmethod
+    def resolve_tags(self, info):
+        return self.tags.values_list("name", flat=True)

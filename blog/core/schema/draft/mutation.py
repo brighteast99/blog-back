@@ -1,8 +1,10 @@
 import graphene
 from django.db import DatabaseError, IntegrityError
+from django.db.transaction import atomic
 
 from blog.core.errors import InternalServerError, InvalidValueError, NotFoundError
 from blog.core.models import Category, Draft
+from blog.core.models.post import Hashtag
 from blog.media.models import Image
 from blog.media.utils import get_image, get_images
 from blog.utils.decorators import login_required
@@ -17,7 +19,8 @@ class DraftInput(graphene.InputObjectType):
     text_content = graphene.String(required=True)
     is_hidden = graphene.Boolean(required=True)
     thumbnail = graphene.String(required=False)
-    images = graphene.List(graphene.String, required=True, default=list)
+    images = graphene.List(graphene.String, required=True)
+    tags = graphene.List(graphene.String, required=True)
 
 
 class CreateDraftMutation(graphene.Mutation):
@@ -28,6 +31,7 @@ class CreateDraftMutation(graphene.Mutation):
     created_draft = graphene.Field(DraftType)
 
     @staticmethod
+    @atomic
     @login_required
     def mutate(self, info, **kwargs):
         data = kwargs.get("data")
@@ -64,6 +68,15 @@ class CreateDraftMutation(graphene.Mutation):
         except (DatabaseError, IntegrityError):
             raise InternalServerError()
 
+        try:
+            input_tag_names = set(data.tags)
+
+            for name in input_tag_names:
+                tag, _ = Hashtag.objects.get_or_create(name=name)
+                draft.tags.add(tag)
+        except (DatabaseError, IntegrityError):
+            raise InternalServerError()
+
         return CreateDraftMutation(success=True, created_draft=draft)
 
 
@@ -71,11 +84,13 @@ class UpdateDraftMutation(graphene.Mutation):
     class Arguments:
         id = graphene.Int(required=True)
         data = DraftInput(required=True)
+        delete_orphan_tags = graphene.Boolean(required=False)
 
     success = graphene.Boolean()
     updated_draft = graphene.Field(DraftType)
 
     @staticmethod
+    @atomic
     @login_required
     def mutate(self, info, **kwargs):
         draft_id = kwargs.get("id")
@@ -110,6 +125,27 @@ class UpdateDraftMutation(graphene.Mutation):
             raise InvalidValueError("유효하지 않은 이미지가 포함되어 있습니다")
         draft.is_hidden = data.get("is_hidden", draft.is_hidden)
 
+        input_tag_names = set(data.tags)
+        previous_tag_names = set(draft.tags.values_list("name", flat=True))
+        tags_to_add = input_tag_names - previous_tag_names
+        try:
+            for name in tags_to_add:
+                tag, _ = Hashtag.objects.get_or_create(name=name)
+                draft.tags.add(tag)
+        except (DatabaseError, IntegrityError):
+            raise InternalServerError()
+
+        tags_to_remove = draft.tags.exclude(name__in=input_tag_names)
+        delete_orphan_tags = kwargs.get("delete_orphan_tags", False)
+        try:
+            for tag in tags_to_remove:
+                draft.tags.remove(tag)
+
+                if delete_orphan_tags and tag.is_orphan:
+                    tag.delete()
+        except DatabaseError:
+            raise InternalServerError()
+
         try:
             draft.save()
         except (DatabaseError, IntegrityError):
@@ -121,22 +157,34 @@ class UpdateDraftMutation(graphene.Mutation):
 class DeleteDraftMutation(graphene.Mutation):
     class Arguments:
         id = graphene.Int(required=True)
+        delete_orphan_tags = graphene.Boolean(required=False)
 
     success = graphene.Boolean()
 
     @staticmethod
+    @atomic
     @login_required
     def mutate(self, info, **kwargs):
         draft_id = kwargs.get("id")
+        delete_orphan_tag = kwargs.get("delete_orphan_tags", False)
 
         try:
             draft = Draft.objects.get(id=draft_id)
-            draft.delete()
-            return DeleteDraftMutation(success=True)
         except Draft.DoesNotExist:
             raise NotFoundError("임시 저장본을 찾을 수 없습니다")
+
+        try:
+            for tag in draft.tags.all():
+                draft.tags.remove(tag)
+
+                if delete_orphan_tag and tag.is_orphan:
+                    tag.delete()
+
+            draft.delete()
         except DatabaseError:
             raise InternalServerError()
+
+        return DeleteDraftMutation(success=True)
 
 
 class Mutation(graphene.ObjectType):
