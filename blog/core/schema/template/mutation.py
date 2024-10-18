@@ -53,7 +53,7 @@ class CreateTemplateMutation(graphene.Mutation):
                 thumbnail=thumbnail,
             )
             template.images.set(images)
-            template.save(update_fields=["images"])
+            template.save()
         except (DatabaseError, IntegrityError):
             raise InternalServerError()
 
