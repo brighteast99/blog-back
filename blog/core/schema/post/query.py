@@ -21,6 +21,7 @@ class Query(graphene.ObjectType):
         title_and_content=graphene.String(),
         title=graphene.String(),
         content=graphene.String(),
+        tag=graphene.List(graphene.String),
         page_size=graphene.Int(),
         offset=graphene.Int(),
         target_post=graphene.ID(),

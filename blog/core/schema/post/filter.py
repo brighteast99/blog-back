@@ -1,3 +1,5 @@
+from functools import reduce
+
 from django.db.models import Q
 from django_filters import CharFilter, FilterSet, NumberFilter
 
@@ -10,6 +12,7 @@ class PostFilter(FilterSet):
     title_and_content = CharFilter(method="search_by_keywords")
     title = CharFilter(method="search_by_keywords")
     content = CharFilter(method="search_by_keywords")
+    tag = CharFilter(method="search_by_tags")
 
     class Meta:
         model = Post
@@ -63,3 +66,6 @@ class PostFilter(FilterSet):
             for keyword in keywords:
                 query |= Q(**{f"{field}__icontains": keyword})
         return queryset.filter(query)
+
+    def search_by_tags(self, queryset, name, value):
+        return queryset.filter(tags__name__in=value).distinct()
