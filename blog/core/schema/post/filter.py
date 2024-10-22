@@ -69,3 +69,55 @@ class PostFilter(FilterSet):
 
     def search_by_tags(self, queryset, name, value):
         return queryset.filter(tags__name__in=value).distinct()
+
+    @staticmethod
+    def find_matching_intervals(str, keywords):
+        if len(keywords) <= 0:
+            return []
+
+        intervals = []
+        for keyword in keywords:
+            cur = 0
+            while cur < len(str):
+                cur = str.find(keyword, cur)
+                if cur == -1:
+                    break
+                intervals.append([cur, cur + len(keyword)])
+                cur += len(keyword)
+
+        if len(intervals) < 2:
+            return intervals
+
+        intervals.sort(key=lambda x: x[0])
+        merged_intervals = [intervals[0]]
+
+        for [start, end] in intervals[1:]:
+            prev_start, prev_end = merged_intervals[-1]
+            if start <= prev_end or not str[prev_end:start].strip():
+                merged_intervals[-1] = [prev_start, max(prev_end, end)]
+            else:
+                merged_intervals.append([start, end])
+
+        return merged_intervals
+
+    @staticmethod
+    def longest_matched_text(post):
+        match_length = lambda highlight: highlight[1] - highlight[0]
+        longest_match_title = max(map(match_length, [*post.title_highlights, [0, 1]]))
+        longest_match_content = max(
+            map(match_length, [*post.content_highlights, [0, 1]])
+        )
+        longest_match = max(longest_match_title, longest_match_content)
+        return (
+            longest_match,
+            longest_match_title,
+            longest_match_content,
+            len(post.title_highlights) + len(post.content_highlights),
+        )
+
+    @staticmethod
+    def matched_tags(tag):
+        def _matched_tags(post):
+            return post.tags.filter(name__in=tag).count()
+
+        return _matched_tags
