@@ -68,7 +68,10 @@ class PostFilter(FilterSet):
         return queryset.filter(query)
 
     def search_by_tags(self, queryset, name, value):
-        return queryset.filter(tags__name__in=value).distinct()
+        if len(value):
+            return queryset.filter(tags__name__in=value).distinct()
+        else:
+            return queryset
 
     @staticmethod
     def find_matching_intervals(str, keywords):
