@@ -1,16 +1,10 @@
-from functools import reduce
+from ast import literal_eval
 
 from django.db.models import Q
-from django_filters import (
-    CharFilter,
-    FilterSet,
-    ModelMultipleChoiceFilter,
-    NumberFilter,
-)
+from django_filters import CharFilter, FilterSet, NumberFilter
 
 from blog.core.errors import PermissionDeniedError
 from blog.core.models import Category, Post
-from blog.core.models.post import Hashtag
 
 
 class PostFilter(FilterSet):
@@ -18,9 +12,7 @@ class PostFilter(FilterSet):
     title_and_content = CharFilter(method="search_by_keywords")
     title = CharFilter(method="search_by_keywords")
     content = CharFilter(method="search_by_keywords")
-    tag = ModelMultipleChoiceFilter(
-        queryset=Hashtag.objects.all(), field_name="tags__name", to_field_name="name"
-    )
+    tag = CharFilter(method="search_by_tags")
 
     class Meta:
         model = Post
@@ -74,6 +66,13 @@ class PostFilter(FilterSet):
             for keyword in keywords:
                 query |= Q(**{f"{field}__icontains": keyword})
         return queryset.filter(query)
+
+    def search_by_tags(self, queryset, name, value):
+        value = literal_eval(value)
+        if len(value):
+            return queryset.filter(tags__name__in=value).distinct()
+        else:
+            return queryset
 
     @staticmethod
     def find_matching_intervals(str, keywords):
