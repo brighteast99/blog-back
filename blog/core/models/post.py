@@ -16,6 +16,9 @@ class Hashtag(models.Model):
             == 0
         )
 
+    def __str__(self):
+        return self.name
+
 
 class AbstractTemplate(models.Model):
     title = models.CharField(max_length=100, null=False, blank=False)
