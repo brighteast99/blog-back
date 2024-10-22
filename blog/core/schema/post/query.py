@@ -107,7 +107,7 @@ class Query(graphene.ObjectType):
         if target_post:
             target_post = localid(target_post)
             try:
-                post = queryset.get(id=target_post)
+                post = Post.objects.get(id=target_post)
                 post_position = list(queryset).index(post)
             except ValueError:
                 raise NotFoundError()
