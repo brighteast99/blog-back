@@ -88,7 +88,7 @@ class Query(graphene.ObjectType):
             )
 
         if order_by == "relavant":
-            tag = kwargs.get("tag", list)
+            tag = kwargs.get("tag", [])
             if len(tag):
                 queryset.sort(
                     key=PostFilter.matched_tags(tag),
