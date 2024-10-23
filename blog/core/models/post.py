@@ -8,6 +8,12 @@ from . import Category
 class Hashtag(models.Model):
     name = models.CharField(max_length=20, null=False, blank=False, unique=True)
 
+    class Meta:
+        ordering = ["name"]
+
+    def __str__(self):
+        return self.name
+
     def is_orphan(self):
         return (
             self.tagged_template.count()
@@ -15,9 +21,6 @@ class Hashtag(models.Model):
             + self.tagged_post.count()
             == 0
         )
-
-    def __str__(self):
-        return self.name
 
 
 class AbstractTemplate(models.Model):
