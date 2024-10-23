@@ -33,8 +33,7 @@ class PostType(DjangoObjectType):
 
     @staticmethod
     def resolve_images(self, info):
-        urls = self.images.values_list("file", flat=True)
-        return urls
+        return [image.file.url for image in self.images.all()]
 
     @staticmethod
     def resolve_tags(self, info):
