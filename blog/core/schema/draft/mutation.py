@@ -3,8 +3,7 @@ from django.db import DatabaseError, IntegrityError
 from django.db.transaction import atomic
 
 from blog.core.errors import InternalServerError, InvalidValueError, NotFoundError
-from blog.core.models import Category, Draft
-from blog.core.models.post import Hashtag
+from blog.core.models import Category, Draft, Hashtag
 from blog.media.models import Image
 from blog.media.utils import get_image, get_images
 from blog.utils.decorators import login_required

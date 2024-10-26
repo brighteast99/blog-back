@@ -3,7 +3,7 @@ from graphene.relay import Node
 from graphene_django import DjangoObjectType
 
 from blog.core.models import Category, Post
-from blog.core.schema.category.type import CategoryType
+from blog.core.schema.category import CategoryType
 from blog.utils.pagination import PageInfoType
 
 from .filter import PostFilter

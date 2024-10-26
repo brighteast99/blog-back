@@ -2,7 +2,7 @@ import graphene
 from graphene_django import DjangoObjectType
 
 from blog.core.models import Category, Draft
-from blog.core.schema.category.type import CategoryType
+from blog.core.schema.category import CategoryType
 
 
 class DraftType(DjangoObjectType):

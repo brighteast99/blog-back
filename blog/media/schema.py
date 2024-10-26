@@ -6,7 +6,7 @@ from graphene_django import DjangoObjectType
 from graphene_file_upload.scalars import Upload
 
 from blog.core.errors import InternalServerError, InvalidValueError, NotFoundError
-from blog.core.schema.post.type import PostType
+from blog.core.schema.post import PostType
 from blog.media.models import Image
 from blog.media.utils import get_image
 from blog.utils.decorators import login_required
