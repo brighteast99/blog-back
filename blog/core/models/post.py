@@ -38,7 +38,7 @@ class AbstractTemplate(models.Model):
     images = models.ManyToManyField(
         Image, related_name="%(class)s_content_of", blank=True
     )
-    tags = models.ManyToManyField(Hashtag, related_name="tagged_%(class)s", blank=True)
+    tags = models.ManyToManyField(Hashtag, related_name="tagged_%(class)ss", blank=True)
 
     class Meta:
         abstract = True
