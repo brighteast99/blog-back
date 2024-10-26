@@ -1,4 +1,5 @@
 from django.db import models
+from django.db.models.functions import Lower
 
 from blog.media.models import Image
 
@@ -9,7 +10,7 @@ class Hashtag(models.Model):
     name = models.CharField(max_length=20, null=False, blank=False, unique=True)
 
     class Meta:
-        ordering = ["name"]
+        ordering = [Lower("name")]
 
     def __str__(self):
         return self.name
