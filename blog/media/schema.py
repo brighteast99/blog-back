@@ -1,3 +1,4 @@
+import filetype
 import graphene
 from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
@@ -120,6 +121,11 @@ class UploadImageMutation(graphene.Mutation):
     @login_required
     def mutate(self, info, **kwargs):
         file = kwargs.get("file")
+
+        file_mime = filetype.guess_mime(file)
+        if file_mime is None or not file_mime.startswith("image"):
+            raise InvalidValueError("이미지 파일이 아닙니다")
+
         path = default_storage.save(f"media/{file.name}"[:50], ContentFile(file.read()))
         created_image = Image.objects.create(file=path)
         return UploadImageMutation(url=created_image.file.url)
