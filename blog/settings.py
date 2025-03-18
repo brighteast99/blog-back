@@ -3,16 +3,14 @@ from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-with open("/run/secrets/django-secret-key", "r") as key:
-    SECRET_KEY = key.read()
+SECRET_KEY=os.getenv("DJANGO_SECRET_KEY")
+AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
+AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
 
-with open("/run/secrets/aws-access-key-id", "r") as key:
-    AWS_ACCESS_KEY_ID = key.read()
-with open("/run/secrets/aws-secret-access-key", "r") as key:
-    AWS_SECRET_ACCESS_KEY = key.read()
-AWS_S3_ENDPOINT_URL = f'https://{os.getenv("AWS_S3_ENDPOINT_URL")}'
+AWS_S3_ENDPOINT_DOMAIN = os.getenv("AWS_S3_ENDPOINT_DOMAIN")
+AWS_S3_ENDPOINT_URL = f'https://{AWS_S3_ENDPOINT_DOMAIN}'
 AWS_STORAGE_BUCKET_NAME = os.getenv("AWS_STORAGE_BUCKET_NAME")
-AWS_S3_CUSTOM_DOMAIN = f'{os.getenv("AWS_S3_ENDPOINT_URL")}/{AWS_STORAGE_BUCKET_NAME}'
+AWS_S3_CUSTOM_DOMAIN = f'{AWS_S3_ENDPOINT_DOMAIN}/{AWS_STORAGE_BUCKET_NAME}'
 AWS_S3_OBJECT_PARAMETERS = {
     "CacheControl": "max-age=86400",
 }
@@ -103,19 +101,10 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "blog.wsgi.application"
 
-try:
-    with open("/run/secrets/postgres-user", "r") as key:
-        POSTGRES_USER = key.read()
 
-    with open("/run/secrets/postgres-password", "r") as key:
-        POSTGRES_PASSWORD = key.read()
-
-    with open("/postgres-host", "r") as key:
-        POSTGRES_HOST = key.read()
-except FileNotFoundError:
-    POSTGRES_USER = "user"
-    POSTGRES_PASSWORD = "pw"
-    POSTGRES_HOST = "host"
+POSTGRES_USER = os.getenv("POSTGRES_USER")
+POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD")
+DB_HOST = os.getenv("DB_HOST")
 
 DATABASES = {
     "default": {
@@ -123,7 +112,7 @@ DATABASES = {
         "NAME": "blog",
         "USER": POSTGRES_USER,
         "PASSWORD": POSTGRES_PASSWORD,
-        "HOST": POSTGRES_HOST,
+        "HOST": DB_HOST,
         "PORT": "5432",
         "ATOMIC_REQUESTS": True,
     }
