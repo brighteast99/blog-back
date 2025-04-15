@@ -1,19 +1,24 @@
-from django.shortcuts import render
+from django.http import HttpResponseNotAllowed
 
 from blog import settings
 
 
-class AdminAccessControlMiddleware:
+class DomainRouterMiddleware:
     def __init__(self, get_response):
         self.get_response = get_response
 
     def __call__(self, request):
-        if not settings.DEBUG:
-            if request.path.startswith("/admin/") or (
-                request.path.startswith("/api/") and request.method == "GET"
-            ):
-                if request.META["HTTP_X_FORWARDED_FOR"] not in settings.ADMIN_HOSTS:
-                    return render(request, "index.html")
+        host = request.get_host()
+        print(host, settings.PROXY_HOST)
 
-        response = self.get_response(request)
-        return response
+        if host.startswith(settings.API_HOST):
+            if (
+                not settings.DEBUG
+                and request.META["HTTP_X_FORWARDED_FOR"] not in settings.ADMIN_HOSTS
+            ):
+                return HttpResponseNotAllowed(["POST"])
+            request.urlconf = "blog.urls_api"
+        elif host.startswith(settings.ADMIN_HOST):
+            request.urlconf = "blog.urls_admin"
+
+        return self.get_response(request)

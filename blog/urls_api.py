@@ -15,18 +15,8 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 
-import requests
-from django.http import HttpResponse
 from django.urls import path
+from django.views.decorators.csrf import csrf_exempt
+from graphene_file_upload.django import FileUploadGraphQLView
 
-from .settings import AWS_S3_ENDPOINT_URL, AWS_STORAGE_BUCKET_NAME
-
-
-def minio_static_response(request):
-    res = requests.get(
-        f"{AWS_S3_ENDPOINT_URL}/{AWS_STORAGE_BUCKET_NAME}/staticfiles/index.html"
-    )
-    return HttpResponse(res.text, content_type="text/html")
-
-
-urlpatterns = [path("", minio_static_response)]
+urlpatterns = [path("", csrf_exempt(FileUploadGraphQLView.as_view(graphiql=True)))]

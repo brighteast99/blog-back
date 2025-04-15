@@ -84,8 +84,8 @@ admin.site.register(Post, PostAdmin)
 
 
 class TemplateAdmin(admin.ModelAdmin):
-    def preview(self, instance: Template):
-        return content_preview(instance.content)
+    # def preview(self, instance: Template):
+    #     return content_preview(instance.content)
 
     def assigned_tags(self, instance: Template):
         return format_tags(instance.tags.values_list("name", flat=True))
@@ -94,7 +94,7 @@ class TemplateAdmin(admin.ModelAdmin):
         "id",
         "template_name",
         "title",
-        "preview",
+        # "preview",
         "assigned_tags",
     )
 

@@ -1,7 +1,7 @@
 from django.db import models
 from mptt.models import MPTTModel, TreeForeignKey
 
-from blog.storage import Cafe24OBS
+from blog.storage import OBS
 
 
 class Category(MPTTModel):
@@ -10,7 +10,7 @@ class Category(MPTTModel):
     is_hidden = models.BooleanField(default=False)
     is_deleted = models.BooleanField(default=False)
     cover_image = models.ImageField(
-        blank=True, null=True, storage=Cafe24OBS, upload_to="category-images/"
+        blank=True, null=True, storage=OBS, upload_to="category-images/"
     )
     subcategory_of = TreeForeignKey(
         "self",

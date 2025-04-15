@@ -18,7 +18,7 @@ class Migration(migrations.Migration):
             field=models.ImageField(
                 blank=True,
                 null=True,
-                storage=blog.storage.Cafe24OBS,
+                storage=blog.storage.OBS,
                 upload_to="profile-image/",
             ),
         ),

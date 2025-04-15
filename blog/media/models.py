@@ -1,6 +1,6 @@
 from django.db import models
 
-from blog.storage import Cafe24OBS
+from blog.storage import OBS
 
 
 class Image(models.Model):
@@ -8,7 +8,7 @@ class Image(models.Model):
         blank=False,
         null=False,
         unique=True,
-        storage=Cafe24OBS,
+        storage=OBS,
         upload_to="media/",
         editable=False,
         width_field="width",

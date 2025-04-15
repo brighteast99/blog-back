@@ -3,14 +3,14 @@ from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY=os.getenv("DJANGO_SECRET_KEY")
+SECRET_KEY = os.getenv("DJANGO_SECRET_KEY")
 AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
 AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
 
 AWS_S3_ENDPOINT_DOMAIN = os.getenv("AWS_S3_ENDPOINT_DOMAIN")
-AWS_S3_ENDPOINT_URL = f'https://{AWS_S3_ENDPOINT_DOMAIN}'
+AWS_S3_ENDPOINT_URL = f"https://{AWS_S3_ENDPOINT_DOMAIN}"
 AWS_STORAGE_BUCKET_NAME = os.getenv("AWS_STORAGE_BUCKET_NAME")
-AWS_S3_CUSTOM_DOMAIN = f'{AWS_S3_ENDPOINT_DOMAIN}/{AWS_STORAGE_BUCKET_NAME}'
+AWS_S3_CUSTOM_DOMAIN = f"{AWS_S3_ENDPOINT_DOMAIN}/{AWS_STORAGE_BUCKET_NAME}"
 AWS_S3_OBJECT_PARAMETERS = {
     "CacheControl": "max-age=86400",
 }
@@ -18,18 +18,25 @@ AWS_S3_FILE_OVERWRITE = False
 AWS_LOCATION = ""
 AWS_DEFAULT_ACL = "public-read"
 
-STATIC_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/{AWS_LOCATION}/static/"
 STATICFILES_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
 DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
 
 DEBUG = os.getenv("DJANGO_DEBUG", "false").lower() == "true"
 
-ALLOWED_HOSTS = ["localhost", "127.0.0.1", os.getenv("PROXY_HOST")]
+PROXY_HOST = os.getenv("PROXY_HOST", "localhost")
+API_HOST = f"api.{PROXY_HOST}"
+ADMIN_HOST = f"admin.{PROXY_HOST}"
+ALLOWED_HOSTS = ["127.0.0.1", "localhost", PROXY_HOST, API_HOST, ADMIN_HOST]
 
 ADMIN_HOSTS = os.getenv("ADMIN_HOSTS", "").split()
 
 CORS_ALLOW_CREDENTIALS = True
-CORS_ORIGIN_WHITELIST = ["http://localhost", os.getenv("PROXY_ORIGIN")]
+CORS_ORIGIN_WHITELIST = [
+    "http://localhost",
+    f"https://{PROXY_HOST}",
+    f"https://{API_HOST}",
+    f"https://{ADMIN_HOST}",
+]
 CORS_ALLOW_METHODS = (
     "GET",
     "OPTIONS",
@@ -47,7 +54,12 @@ CORS_ALLOW_HEADERS = (
     "x-requested-with",
 )
 
-CSRF_TRUSTED_ORIGINS = ["http://blog.localhost", os.getenv("PROXY_ORIGIN")]
+CSRF_TRUSTED_ORIGINS = [
+    "http://localhost",
+    f"https://{PROXY_HOST}",
+    f"https://{API_HOST}",
+    f"https://{ADMIN_HOST}",
+]
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -78,7 +90,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
-    "blog.utils.middlewares.AdminAccessControlMiddleware",
+    "blog.utils.middlewares.DomainRouterMiddleware",
 ]
 
 ROOT_URLCONF = "blog.urls"
@@ -155,7 +167,7 @@ USE_TZ = True
 
 STATIC_URL = "/static/"
 STATIC_ROOT = os.path.join(BASE_DIR, ".staticfiles")
-STATICFILES_DIRS = [os.path.join(BASE_DIR, "client", "static")]
+STATICFILES_DIRS = []
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
