@@ -35,14 +35,3 @@ jobs:
           --build-arg DJANGO_SECRET_KEY="$DJANGO_SECRET_KEY" \
           .
           docker push docker.brighteast.me/services/blog:latest
-
-      - name: Set up kubeconfig
-        run: |
-          mkdir -p ~/.kube
-          echo "${{ secrets.KUBECONFIG }}" > ~/.kube/config
-          chmod 600 ~/.kube/config
-
-      - name: Deploy to Kubernetes
-        run: |
-          kubectl set image deployment/blog-dev container-0=docker.brighteast.me/services/blog:${RELEASE_TAG} --namespace=service
-          kubectl rollout status deployment/blog-dev --namespace=service
