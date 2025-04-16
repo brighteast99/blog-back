@@ -23,10 +23,12 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
 
       - name: Build and push docker image
+        env:
+          DJANGO_SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY }}
         run: |
           docker build \
           -t docker.brighteast.me/blog/blog:${RELEASE_TAG} \
-          --build-arg DJANGO_SECRET_KEY=${{ secrets.DJANGO_SECRET_KEY }} \
+          --build-arg DJANGO_SECRET_KEY="$DJANGO_SECRET_KEY" \
           .
           docker push docker.brighteast.me/blog/blog:${RELEASE_TAG}
 
