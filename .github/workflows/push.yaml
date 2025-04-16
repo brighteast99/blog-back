@@ -31,10 +31,10 @@ jobs:
           DJANGO_SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY }}
         run: |
           docker build \
-          -t docker.brighteast.me/blog/blog:latest \
+          -t docker.brighteast.me/services/blog:latest \
           --build-arg DJANGO_SECRET_KEY="$DJANGO_SECRET_KEY" \
           .
-          docker push docker.brighteast.me/blog/blog:latest
+          docker push docker.brighteast.me/services/blog:latest
 
       - name: Set up kubeconfig
         run: |
