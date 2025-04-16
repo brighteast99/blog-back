@@ -24,19 +24,13 @@ DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
 DEBUG = os.getenv("DJANGO_DEBUG", "false").lower() == "true"
 
 PROXY_HOST = os.getenv("PROXY_HOST", "localhost")
-API_HOST = f"api.{PROXY_HOST}"
-ADMIN_HOST = f"admin.{PROXY_HOST}"
-ALLOWED_HOSTS = ["127.0.0.1", "localhost", PROXY_HOST, API_HOST, ADMIN_HOST]
+PROXY_ORIGIN = f"https://{PROXY_HOST}"
+ALLOWED_HOSTS = ["127.0.0.1", "localhost", PROXY_HOST]
 
 ADMIN_HOSTS = os.getenv("ADMIN_HOSTS", "").split()
 
 CORS_ALLOW_CREDENTIALS = True
-CORS_ORIGIN_WHITELIST = [
-    "http://localhost",
-    f"https://{PROXY_HOST}",
-    f"https://{API_HOST}",
-    f"https://{ADMIN_HOST}",
-]
+CORS_ORIGIN_WHITELIST = ["http://localhost", PROXY_ORIGIN]
 CORS_ALLOW_METHODS = (
     "GET",
     "OPTIONS",
@@ -54,12 +48,7 @@ CORS_ALLOW_HEADERS = (
     "x-requested-with",
 )
 
-CSRF_TRUSTED_ORIGINS = [
-    "http://localhost",
-    f"https://{PROXY_HOST}",
-    f"https://{API_HOST}",
-    f"https://{ADMIN_HOST}",
-]
+CSRF_TRUSTED_ORIGINS = ["http://localhost", PROXY_ORIGIN]
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -90,7 +79,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
-    "blog.utils.middlewares.DomainRouterMiddleware",
+    "blog.utils.middlewares.AdminAccessControlMiddleware",
 ]
 
 ROOT_URLCONF = "blog.urls"
