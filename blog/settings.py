@@ -30,7 +30,7 @@ ALLOWED_HOSTS = ["127.0.0.1", "localhost", PROXY_HOST]
 ADMIN_HOSTS = os.getenv("ADMIN_HOSTS", "").split()
 
 CORS_ALLOW_CREDENTIALS = True
-CORS_ORIGIN_WHITELIST = ["http://localhost", PROXY_ORIGIN]
+CORS_ALLOWED_ORIGINS = ["http://localhost", PROXY_ORIGIN]
 CORS_ALLOW_METHODS = (
     "GET",
     "OPTIONS",
