@@ -29,13 +29,11 @@ def minio_static_response(request):
     res = requests.get(
         f"{AWS_S3_ENDPOINT_URL}/{AWS_STORAGE_BUCKET_NAME}/staticfiles/index.html"
     )
-    print(res.status_code)
-    print(res.text)
     return HttpResponse(res.text, content_type="text/html")
 
 
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/", csrf_exempt(FileUploadGraphQLView.as_view(graphiql=DEBUG))),
-    re_path(r"^.*$", minio_static_response),
+    re_path(r"^.*$", csrf_exempt(minio_static_response)),
 ]

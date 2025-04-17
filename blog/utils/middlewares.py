@@ -11,7 +11,4 @@ class AdminAccessControlMiddleware:
             if request.META["HTTP_X_FORWARDED_FOR"] not in settings.ADMIN_HOSTS:
                 if request.path.startswith("/admin/"):
                     return minio_static_response(request)
-                # if request.path.startswith("/api/") and request.method == "GET":
-                #     return HttpResponseNotAllowed(["POST"])
-
         return self.get_response(request)
