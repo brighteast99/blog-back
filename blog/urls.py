@@ -35,5 +35,5 @@ def minio_static_response(request):
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/", csrf_exempt(FileUploadGraphQLView.as_view(graphiql=DEBUG))),
-    re_path(r"^.*$", csrf_exempt(minio_static_response)),
+    re_path(r"^.*$", minio_static_response),
 ]
