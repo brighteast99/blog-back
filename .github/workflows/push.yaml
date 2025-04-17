@@ -57,7 +57,6 @@ jobs:
           -d '{"content": "🔔 **${{ github.event.repository.name }}** latest 빌드 완료"}'
 
       - name: Notify on Failure
-        if: steps.changes.outputs.changes_detected == 'true'
         if: failure()
         run: |
           curl -X POST "https://n8n.brighteast.me/webhook/notification" \
