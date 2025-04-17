@@ -4,12 +4,19 @@ on:
   release:
     types:
       - created
+  pull_request:
+    branches:
+      - main
+      - develop
+    types:
+      - opened
+      - synchronize
 
 jobs:
   build-and-upload:
     runs-on: ubuntu-latest
     env:
-      RELEASE_TAG: ${{ github.ref_name }}
+      RELEASE_TAG: test
 
     steps:
       - name: Checkout code
@@ -31,6 +38,20 @@ jobs:
           --build-arg DJANGO_SECRET_KEY="$DJANGO_SECRET_KEY" \
           .
           docker push docker.brighteast.me/services/blog:${RELEASE_TAG}
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'latest'
+
+      - name: Set up kubeconfig
+        run: |
+          echo "${{ secrets.KUBECONFIG }}" | base64 -d > $HOME/.kube/config
+
+      - name: Deploy to Kubernetes
+        run: |
+          kubectl set image services/blog container-0=docker.brighteast.me/services/blog:${RELEASE_TAG} --namespace=services
+          kubectl rollout status services/blog --namespace=services
 
       - name: Notify release
         run: |
