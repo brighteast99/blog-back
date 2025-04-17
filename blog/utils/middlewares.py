@@ -1,6 +1,5 @@
-from django.shortcuts import render
-
 from blog import settings
+from blog.urls import minio_static_response
 
 
 class AdminAccessControlMiddleware:
@@ -9,11 +8,7 @@ class AdminAccessControlMiddleware:
 
     def __call__(self, request):
         if not settings.DEBUG:
-            if request.path.startswith("/admin/") or (
-                request.path.startswith("/api/") and request.method == "GET"
-            ):
-                if request.META["HTTP_X_FORWARDED_FOR"] not in settings.ADMIN_HOSTS:
-                    return render(request, "index.html")
-
-        response = self.get_response(request)
-        return response
+            if request.META["HTTP_X_FORWARDED_FOR"] not in settings.ADMIN_HOSTS:
+                if request.path.startswith("/admin/"):
+                    return minio_static_response(request)
+        return self.get_response(request)

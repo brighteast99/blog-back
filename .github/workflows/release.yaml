@@ -1,0 +1,48 @@
+name: Build latest
+
+on:
+  release:
+    types:
+      - created
+
+jobs:
+  build-and-upload:
+    runs-on: ubuntu-latest
+    env:
+      RELEASE_TAG: ${{ github.ref_name }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Log in to Docker Registry
+        uses: docker/login-action@v2
+        with:
+          registry: docker.brighteast.me
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and push docker image
+        env:
+          DJANGO_SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY }}
+        run: |
+          docker build \
+          -t docker.brighteast.me/services/blog:${RELEASE_TAG} \
+          --build-arg DJANGO_SECRET_KEY="$DJANGO_SECRET_KEY" \
+          .
+          docker push docker.brighteast.me/services/blog:${RELEASE_TAG}
+
+      - name: Notify release
+        run: |
+          curl -X POST "https://n8n.brighteast.me/webhook/notification" \
+          -u ${{ secrets.WEBHOOK_BASIC_AUTH }} \
+          -H "Content-Type: application/json" \
+          -d '{"content": "🔔 **${{ github.event.repository.name }}** ${RELEASE_TAG} 빌드 완료"}'
+
+      - name: Notify on Failure
+        if: failure()
+        run: |
+          curl -X POST "https://n8n.brighteast.me/webhook/notification" \
+          -u ${{ secrets.WEBHOOK_BASIC_AUTH }} \
+          -H "Content-Type: application/json" \
+          -d '{"content": "🚨 **${{ github.event.repository.name }}** ${RELEASE_TAG} 빌드 실패"}'
