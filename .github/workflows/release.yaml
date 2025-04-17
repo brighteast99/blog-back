@@ -46,6 +46,7 @@ jobs:
 
       - name: Set up kubeconfig
         run: |
+          mkdir -p $HOME/.kube
           echo "${{ secrets.KUBECONFIG }}" | base64 -d > $HOME/.kube/config
 
       - name: Deploy to Kubernetes
@@ -58,7 +59,7 @@ jobs:
           curl -X POST "https://n8n.brighteast.me/webhook/notification" \
           -u ${{ secrets.WEBHOOK_BASIC_AUTH }} \
           -H "Content-Type: application/json" \
-          -d "{\"content\": \"🔔 **${{ github.event.repository.name }}** ${RELEASE_TAG} 빌드 완료\"}"
+          -d "{\"content\": \"🔔 **${{ github.event.repository.name }}** ${RELEASE_TAG} 배포 완료\"}"
 
       - name: Notify on Failure
         if: failure()
@@ -66,4 +67,4 @@ jobs:
           curl -X POST "https://n8n.brighteast.me/webhook/notification" \
           -u ${{ secrets.WEBHOOK_BASIC_AUTH }} \
           -H "Content-Type: application/json" \
-          -d "{\"content\": \"🚨 **${{ github.event.repository.name }}** ${RELEASE_TAG} 빌드 실패\"}"
+          -d "{\"content\": \"🚨 **${{ github.event.repository.name }}** ${RELEASE_TAG} 배포 실패\"}"
