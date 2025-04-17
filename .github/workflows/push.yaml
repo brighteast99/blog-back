@@ -12,8 +12,25 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Check changes
+        id: changes
+        run: |
+          CHANGED=$(git diff --name-only HEAD~1 HEAD)
+          echo "Changed files:"
+          echo "$CHANGED"
+
+          if echo "$CHANGED" | grep -Eq '^(Dockerfile|guniconr-conf\.py|manage\.py|requirements\.txt|blog/)' ; then
+            echo "changes_detected=true" >> $GITHUB_OUTPUT
+          else
+            echo "No meaningful changes. Skip build."
+            echo "changes_detected=false" >> $GITHUB_OUTPUT
+          fi
 
       - name: Log in to Docker Registry
+        if: steps.changes.outputs.changes_detected == 'true'
         uses: docker/login-action@v2
         with:
           registry: docker.brighteast.me
@@ -21,6 +38,7 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
 
       - name: Build and push docker image
+        if: steps.changes.outputs.changes_detected == 'true'
         env:
           DJANGO_SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY }}
         run: |
@@ -31,6 +49,7 @@ jobs:
           docker push docker.brighteast.me/services/blog:latest
 
       - name: Notify release
+        if: steps.changes.outputs.changes_detected == 'true'
         run: |
           curl -X POST "https://n8n.brighteast.me/webhook/notification" \
           -u ${{ secrets.WEBHOOK_BASIC_AUTH }} \
@@ -38,6 +57,7 @@ jobs:
           -d '{"content": "🔔 **${{ github.event.repository.name }}** latest 빌드 완료"}'
 
       - name: Notify on Failure
+        if: steps.changes.outputs.changes_detected == 'true'
         if: failure()
         run: |
           curl -X POST "https://n8n.brighteast.me/webhook/notification" \
