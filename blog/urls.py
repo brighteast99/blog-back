@@ -19,8 +19,9 @@ import requests
 from django.contrib import admin
 from django.http import HttpResponse
 from django.urls import path, re_path
+from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
-from graphene_file_upload.django import FileUploadGraphQLView
+from graphene_django.views import GraphQLView
 
 from .settings import AWS_S3_ENDPOINT_URL, AWS_STORAGE_BUCKET_NAME
 
@@ -32,9 +33,14 @@ def minio_static_response(request):
     return HttpResponse(res.text, content_type="text/html")
 
 
+@method_decorator(csrf_exempt, name="dispatch")
+class CsrfExemptGraphQLView(GraphQLView):
+    pass
+
+
 urlpatterns = [
     path("admin/", admin.site.urls),
-    path("api/", csrf_exempt(FileUploadGraphQLView.as_view(graphiql=True))),
+    path("api/", CsrfExemptGraphQLView.as_view(graphiql=True)),
 ]
 
 urlpatterns.append(re_path(r"^.*$", minio_static_response))
