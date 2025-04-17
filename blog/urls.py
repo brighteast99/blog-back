@@ -38,4 +38,3 @@ urlpatterns = [
     path("api/", csrf_exempt(FileUploadGraphQLView.as_view(graphiql=DEBUG))),
     re_path(r"^.*$", TemplateView.as_view(template_name="index.html")),
 ]
-urlpatterns.append()
