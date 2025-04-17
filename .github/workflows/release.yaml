@@ -51,8 +51,8 @@ jobs:
 
       - name: Deploy to Kubernetes
         run: |
-          kubectl set image service/blog container-0=docker.brighteast.me/services/blog:${RELEASE_TAG} --namespace=service
-          kubectl rollout status service/blog --namespace=service
+          kubectl set image deployment/blog container-0=docker.brighteast.me/services/blog:${RELEASE_TAG} --namespace=service
+          kubectl rollout status deployment/blog --namespace=service
 
       - name: Notify release
         run: |
