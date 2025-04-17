@@ -20,7 +20,6 @@ from django.contrib import admin
 from django.http import HttpResponse
 from django.urls import path, re_path
 from django.views.decorators.csrf import csrf_exempt
-from django.views.generic import TemplateView
 from graphene_file_upload.django import FileUploadGraphQLView
 
 from .settings import AWS_S3_ENDPOINT_URL, AWS_STORAGE_BUCKET_NAME, DEBUG
@@ -36,5 +35,5 @@ def minio_static_response(request):
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/", csrf_exempt(FileUploadGraphQLView.as_view(graphiql=DEBUG))),
-    re_path(r"^.*$", TemplateView.as_view(template_name="index.html")),
+    re_path(r"^.*$", minio_static_response),
 ]
