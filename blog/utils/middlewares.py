@@ -1,5 +1,3 @@
-from django.http import HttpResponseNotAllowed
-
 from blog import settings
 from blog.urls import minio_static_response
 
@@ -13,8 +11,8 @@ class AdminAccessControlMiddleware:
             if request.META["HTTP_X_FORWARDED_FOR"] not in settings.ADMIN_HOSTS:
                 if request.path.startswith("/admin/"):
                     return minio_static_response(request)
-                if request.path.startswith("/api/") and request.method == "GET":
-                    return HttpResponseNotAllowed(["POST"])
+                # if request.path.startswith("/api/") and request.method == "GET":
+                #     return HttpResponseNotAllowed(["POST"])
 
         response = self.get_response(request)
         return response
