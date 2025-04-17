@@ -14,5 +14,4 @@ class AdminAccessControlMiddleware:
                 # if request.path.startswith("/api/") and request.method == "GET":
                 #     return HttpResponseNotAllowed(["POST"])
 
-        response = self.get_response(request)
-        return response
+        return self.get_response(request)

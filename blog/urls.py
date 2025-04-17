@@ -29,6 +29,8 @@ def minio_static_response(request):
     res = requests.get(
         f"{AWS_S3_ENDPOINT_URL}/{AWS_STORAGE_BUCKET_NAME}/staticfiles/index.html"
     )
+    print(res.status_code)
+    print(res.text)
     return HttpResponse(res.text, content_type="text/html")
 
 
