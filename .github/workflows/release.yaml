@@ -4,19 +4,12 @@ on:
   release:
     types:
       - created
-  pull_request:
-    branches:
-      - main
-      - develop
-    types:
-      - opened
-      - synchronize
 
 jobs:
   build-and-upload:
     runs-on: ubuntu-latest
     env:
-      RELEASE_TAG: test
+      RELEASE_TAG: ${{ github.ref_name }}
 
     steps:
       - name: Checkout code
