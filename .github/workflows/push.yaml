@@ -6,8 +6,11 @@ on:
       - main
 
 jobs:
-  build-and-upload:
+  build-and-push:
     runs-on: ubuntu-latest
+
+    outputs:
+      changes-detected: ${{ steps.detect_changes.outputs.changes_detected }}
 
     steps:
       - name: Checkout code
@@ -16,7 +19,7 @@ jobs:
           fetch-depth: 2
 
       - name: Check changes
-        id: changes
+        id: detect_changes
         run: |
           CHANGED=$(git diff --name-only HEAD~1 HEAD)
           echo "Changed files:"
@@ -48,18 +51,24 @@ jobs:
           .
           docker push docker.brighteast.me/services/blog:latest
 
-      - name: Notify release
-        if: steps.changes.outputs.changes_detected == 'true'
-        run: |
-          curl -X POST "https://n8n.brighteast.me/webhook/notification" \
-          -u ${{ secrets.WEBHOOK_BASIC_AUTH }} \
-          -H "Content-Type: application/json" \
-          -d '{"content": "🔔 **${{ github.event.repository.name }}** latest 빌드 완료"}'
+  notify-success:
+    needs: build-and-push
+    if: needs.build-and-push.result == 'success' && needs.build-and-push.outputs.changes-detected == 'true'
+    uses: brighteast99/workflows/.github/workflows/notify.yaml@main
+    with:
+      target: discord
+      identity: github
+      message: '🔔 **${{ github.event.repository.name }}** latest 배포 완료'
+    secrets:
+      auth: ${{ secrets.WEBHOOK_BASIC_AUTH }}
 
-      - name: Notify on Failure
-        if: failure()
-        run: |
-          curl -X POST "https://n8n.brighteast.me/webhook/notification" \
-          -u ${{ secrets.WEBHOOK_BASIC_AUTH }} \
-          -H "Content-Type: application/json" \
-          -d '{"content": "🚨 **${{ github.event.repository.name }}** latest 빌드 실패"}'
+  notify-failure:
+    needs: build-and-push
+    if: needs.build-and-push.result == 'failure'
+    uses: brighteast99/workflows/.github/workflows/notify.yaml@main
+    with:
+      target: discord
+      identity: github
+      message: '🚨 **${{ github.event.repository.name }}** latest 배포 실패'
+    secrets:
+      auth: ${{ secrets.WEBHOOK_BASIC_AUTH }}
