@@ -6,8 +6,9 @@ on:
       - created
 
 jobs:
-  build-and-upload:
+  build-and-release:
     runs-on: ubuntu-latest
+
     env:
       RELEASE_TAG: ${{ github.ref_name }}
 
@@ -47,17 +48,24 @@ jobs:
           kubectl set image deployment/blog container-0=docker.brighteast.me/services/blog:${RELEASE_TAG} --namespace=service
           kubectl rollout status deployment/blog --namespace=service
 
-      - name: Notify release
-        run: |
-          curl -X POST "https://n8n.brighteast.me/webhook/notification" \
-          -u ${{ secrets.WEBHOOK_BASIC_AUTH }} \
-          -H "Content-Type: application/json" \
-          -d "{\"content\": \"🔔 **${{ github.event.repository.name }}** ${RELEASE_TAG} 배포 완료\"}"
+  notify-success:
+    needs: build-and-release
+    if: needs.build-and-release.result == 'success'
+    uses: brighteast99/workflows/.github/workflows/notify.yaml@main
+    with:
+      target: discord
+      identity: github
+      message: '🔔 **${{ github.event.repository.name }}** ${RELEASE_TAG} 릴리즈 완료'
+    secrets:
+      auth: ${{ secrets.WEBHOOK_BASIC_AUTH }}
 
-      - name: Notify on Failure
-        if: failure()
-        run: |
-          curl -X POST "https://n8n.brighteast.me/webhook/notification" \
-          -u ${{ secrets.WEBHOOK_BASIC_AUTH }} \
-          -H "Content-Type: application/json" \
-          -d "{\"content\": \"🚨 **${{ github.event.repository.name }}** ${RELEASE_TAG} 배포 실패\"}"
+  notify-failure:
+    needs: build-and-release
+    if: needs.build-and-release.result == 'failure'
+    uses: brighteast99/workflows/.github/workflows/notify.yaml@main
+    with:
+      target: discord
+      identity: github
+      message: '🚨 **${{ github.event.repository.name }}** ${RELEASE_TAG} 릴리즈 실패'
+    secrets:
+      auth: ${{ secrets.WEBHOOK_BASIC_AUTH }}
